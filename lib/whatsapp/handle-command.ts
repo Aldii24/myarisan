@@ -17,14 +17,14 @@ import { getUserMemberships } from "@/lib/auth/user";
 import { getPackageStatus } from "@/lib/subscription";
 
 import type { WhatsAppCommand } from "./command-parser";
+import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
 function getAppUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  );
+  reportMissingWhatsAppEnv(["NEXT_PUBLIC_APP_URL"], "links");
+
+  return getWhatsAppConfig().appUrl;
 }
 
 function dashboardUrl(path = "/app") {

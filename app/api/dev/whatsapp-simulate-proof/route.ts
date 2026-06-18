@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { debugWhatsApp } from "@/lib/whatsapp/config";
 import { handleWhatsAppProofImage } from "@/lib/whatsapp/handle-proof-image";
 import {
   recordInboundWhatsAppMessage,
@@ -23,6 +24,8 @@ export async function POST(request: Request) {
 
   const from = String(formData.get("from") ?? "").trim();
   const caption = String(formData.get("caption") ?? "").trim() || null;
+  const requestedMessageId = String(formData.get("messageId") ?? "").trim();
+  const messageId = requestedMessageId || `dev-proof-${randomUUID()}`;
   const file = formData.get("file");
 
   if (!from || !(file instanceof File)) {
@@ -40,9 +43,35 @@ export async function POST(request: Request) {
       fromPhone: from,
       mediaUrl: `dev-file:${file.name}`,
       messageType: "image",
-      whatsappMessageId: `dev-proof-${randomUUID()}`,
+      whatsappMessageId: messageId,
     });
     inboundLogId = inbound.logId;
+
+    if (inbound.duplicate) {
+      debugWhatsApp("Proof simulator delivery", {
+        duplicate: true,
+        messageId,
+        messageType: "image",
+        paymentId: null,
+      });
+
+      return Response.json({
+        duplicate: true,
+        duplicates: 1,
+        ignored: 1,
+        messageId,
+        paymentId: null,
+        processed: 0,
+        received: true,
+        reply: null,
+        status: null,
+      });
+    }
+
+    if (!inbound.userId) {
+      throw new Error("Pengguna WhatsApp tidak ditemukan.");
+    }
+
     const result = await handleWhatsAppProofImage({
       caption,
       file,
@@ -53,10 +82,23 @@ export async function POST(request: Request) {
       await updateInboundWhatsAppStatus(inboundLogId, "processed");
     }
 
+    debugWhatsApp("Proof simulator delivery", {
+      duplicate: false,
+      messageId,
+      messageType: "image",
+      paymentId: result.paymentId,
+    });
+
     return Response.json({
       detectedAmount: result.detectedAmount ?? null,
+      duplicate: false,
+      duplicates: 0,
       hasWarnings: result.hasWarnings ?? false,
+      ignored: 0,
+      messageId,
       paymentId: result.paymentId,
+      processed: 1,
+      received: true,
       reply: result.reply,
       status: result.status,
     });

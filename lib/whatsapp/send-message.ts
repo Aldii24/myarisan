@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { dashboardNotifications, messageLogs } from "@/db/schema";
 import { findUserForLogin, normalizePhone } from "@/lib/auth/user";
 
+import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+
 type SendResult =
   | { ok: true; messageId: string | null; status: "sent" }
   | {
@@ -86,11 +88,13 @@ export async function sendWhatsAppText(input: {
     };
   }
 
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
-  const apiVersion = process.env.WHATSAPP_API_VERSION?.trim() || "v20.0";
+  const config = getWhatsAppConfig();
+  reportMissingWhatsAppEnv(
+    ["WHATSAPP_ACCESS_TOKEN", "WHATSAPP_PHONE_NUMBER_ID"],
+    "send",
+  );
 
-  if (!accessToken || !phoneNumberId) {
+  if (!config.accessToken || !config.phoneNumberId) {
     await logOutbound({
       body,
       costType: "free_window",
@@ -108,7 +112,7 @@ export async function sendWhatsAppText(input: {
 
   try {
     const response = await fetch(
-      `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
+      `https://graph.facebook.com/${config.apiVersion}/${config.phoneNumberId}/messages`,
       {
         body: JSON.stringify({
           messaging_product: "whatsapp",
@@ -121,7 +125,7 @@ export async function sendWhatsAppText(input: {
           type: "text",
         }),
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${config.accessToken}`,
           "Content-Type": "application/json",
         },
         method: "POST",

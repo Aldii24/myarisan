@@ -12,13 +12,13 @@ import {
 import { formatRupiah } from "@/lib/arisan";
 import { createPaymentProofFromUpload } from "@/lib/payments/create-payment-proof";
 
+import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
 import { sendWhatsAppText } from "./send-message";
 
 function getAppUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  );
+  reportMissingWhatsAppEnv(["NEXT_PUBLIC_APP_URL"], "links");
+
+  return getWhatsAppConfig().appUrl;
 }
 
 async function notifyAdmin(input: {

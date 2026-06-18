@@ -1,3 +1,8 @@
+import {
+  debugWhatsApp,
+  getWhatsAppConfig,
+  reportMissingWhatsAppEnv,
+} from "@/lib/whatsapp/config";
 import { handleWhatsAppProofImage } from "@/lib/whatsapp/handle-proof-image";
 import {
   recordInboundWhatsAppMessage,
@@ -9,87 +14,157 @@ import { sendWhatsAppText } from "@/lib/whatsapp/send-message";
 
 export const runtime = "nodejs";
 
+const processingFailureReply =
+  "Maaf, bukti/pesan belum bisa diproses. Coba kirim ulang atau cek dashboard MyArisan.";
+
+type MetaContact = {
+  profile?: { name?: string };
+  wa_id?: string;
+};
+
+type MetaMessage = {
+  from?: string;
+  id?: string;
+  image?: {
+    caption?: string;
+    id?: string;
+    mime_type?: string;
+    sha256?: string;
+  };
+  text?: { body?: string };
+  timestamp?: string;
+  type?: string;
+};
+
+type MetaWebhookValue = {
+  contacts?: MetaContact[];
+  messages?: MetaMessage[];
+  metadata?: {
+    display_phone_number?: string;
+    phone_number_id?: string;
+  };
+  statuses?: unknown[];
+};
+
 type WhatsAppWebhookPayload = {
   entry?: Array<{
     changes?: Array<{
-      value?: {
-        messages?: Array<{
-          from?: string;
-          id?: string;
-          image?: {
-            caption?: string;
-            id?: string;
-            mime_type?: string;
-          };
-          text?: { body?: string };
-          type?: string;
-        }>;
-      };
+      field?: string;
+      value?: MetaWebhookValue;
     }>;
+    id?: string;
   }>;
+  object?: string;
 };
 
 type WebhookMessage =
   | {
+      contactName: string | null;
       fromPhone: string;
+      metadata: MetaWebhookValue["metadata"];
       text: string;
+      timestamp: Date | null;
       type: "text";
       whatsappMessageId: string;
     }
   | {
       caption: string | null;
+      contactName: string | null;
       fromPhone: string;
       mediaId: string;
+      metadata: MetaWebhookValue["metadata"];
+      mimeType: string | null;
+      sha256: string | null;
+      timestamp: Date | null;
       type: "image";
       whatsappMessageId: string;
     };
 
-function getMessages(payload: WhatsAppWebhookPayload): WebhookMessage[] {
+function parseTimestamp(value: string | undefined) {
+  if (!value || !/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const timestamp = new Date(Number(value) * 1000);
+
+  return Number.isNaN(timestamp.getTime()) ? null : timestamp;
+}
+
+function contactNameFor(contacts: MetaContact[] | undefined, fromPhone: string) {
   return (
-    payload.entry?.flatMap(
-      (entry) =>
-        entry.changes?.flatMap(
-          (change) =>
-            change.value?.messages
-              ?.flatMap((message): WebhookMessage[] => {
-                if (
-                  message.type === "text" &&
-                  message.id &&
-                  message.from &&
-                  message.text?.body
-                ) {
-                  return [
-                    {
-                      fromPhone: message.from,
-                      text: message.text.body,
-                      type: "text",
-                      whatsappMessageId: message.id,
-                    },
-                  ];
-                }
-
-                if (
-                  message.type === "image" &&
-                  message.id &&
-                  message.from &&
-                  message.image?.id
-                ) {
-                  return [
-                    {
-                      caption: message.image.caption?.trim() || null,
-                      fromPhone: message.from,
-                      mediaId: message.image.id,
-                      type: "image",
-                      whatsappMessageId: message.id,
-                    },
-                  ];
-                }
-
-                return [];
-              }) ?? [],
-        ) ?? [],
-    ) ?? []
+    contacts?.find((contact) => contact.wa_id === fromPhone)?.profile?.name?.trim() ||
+    null
   );
+}
+
+function getMessages(payload: WhatsAppWebhookPayload): {
+  ignoredMessageTypes: string[];
+  messages: WebhookMessage[];
+  statusCount: number;
+} {
+  const messages: WebhookMessage[] = [];
+  const ignoredMessageTypes: string[] = [];
+  let statusCount = 0;
+
+  for (const entry of payload.entry ?? []) {
+    for (const change of entry.changes ?? []) {
+      const value = change.value;
+
+      if (!value) {
+        continue;
+      }
+
+      statusCount += value.statuses?.length ?? 0;
+
+      for (const message of value.messages ?? []) {
+        if (!message.id || !message.from) {
+          continue;
+        }
+
+        const common = {
+          contactName: contactNameFor(value.contacts, message.from),
+          fromPhone: message.from,
+          metadata: value.metadata,
+          timestamp: parseTimestamp(message.timestamp),
+          whatsappMessageId: message.id,
+        };
+
+        if (message.type === "text" && message.text?.body) {
+          messages.push({
+            ...common,
+            text: message.text.body,
+            type: "text",
+          });
+          continue;
+        }
+
+        if (message.type === "image" && message.image?.id) {
+          messages.push({
+            ...common,
+            caption: message.image.caption?.trim() || null,
+            mediaId: message.image.id,
+            mimeType: message.image.mime_type?.trim() || null,
+            sha256: message.image.sha256?.trim() || null,
+            type: "image",
+          });
+          continue;
+        }
+
+        ignoredMessageTypes.push(message.type || "unknown");
+      }
+    }
+  }
+
+  return { ignoredMessageTypes, messages, statusCount };
+}
+
+async function sendProcessingFailure(fromPhone: string) {
+  const result = await sendWhatsAppText({
+    body: processingFailureReply,
+    toPhone: fromPhone,
+  });
+
+  return result.ok;
 }
 
 export async function GET(request: Request) {
@@ -97,15 +172,20 @@ export async function GET(request: Request) {
   const mode = url.searchParams.get("hub.mode");
   const token = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN?.trim();
+  const config = getWhatsAppConfig();
 
-  if (!verifyToken) {
-    return new Response("WHATSAPP_VERIFY_TOKEN belum diatur.", { status: 503 });
+  if (!config.verifyToken) {
+    reportMissingWhatsAppEnv(["WHATSAPP_VERIFY_TOKEN"], "verify");
   }
 
-  if (mode === "subscribe" && token === verifyToken && challenge) {
+  if (
+    config.verifyToken &&
+    mode === "subscribe" &&
+    token === config.verifyToken &&
+    challenge
+  ) {
     return new Response(challenge, {
-      headers: { "Content-Type": "text/plain" },
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
       status: 200,
     });
   }
@@ -119,28 +199,67 @@ export async function POST(request: Request) {
   try {
     payload = (await request.json()) as WhatsAppWebhookPayload;
   } catch {
-    return Response.json({ error: "Payload JSON tidak valid." }, { status: 400 });
+    return Response.json({ received: false }, { status: 400 });
   }
 
-  const messages = getMessages(payload);
-  const results = [];
+  const parsed = getMessages(payload);
+  const results: Array<Record<string, unknown>> = [];
 
-  for (const message of messages) {
+  debugWhatsApp("Webhook delivery received", {
+    ignoredMessageTypes: parsed.ignoredMessageTypes,
+    messageCount: parsed.messages.length,
+    object: payload.object ?? null,
+    statusCount: parsed.statusCount,
+  });
+
+  for (const message of parsed.messages) {
     let imageLogId: string | null = null;
+
+    debugWhatsApp("Inbound message", {
+      contactName: message.contactName,
+      fromPhone: message.fromPhone,
+      messageType: message.type,
+      phoneNumberId: message.metadata?.phone_number_id ?? null,
+      timestamp: message.timestamp?.toISOString() ?? null,
+    });
 
     try {
       if (message.type === "text") {
         const processed = await processInboundWhatsAppText(message);
-        const sendResult =
-          processed.reply && !processed.duplicate
-            ? await sendWhatsAppText({
-                body: processed.reply,
-                toPhone: processed.fromPhone,
-              })
-            : null;
 
+        if (processed.duplicate) {
+          debugWhatsApp("Webhook message result", {
+            duplicate: true,
+            messageId: message.whatsappMessageId,
+            messageType: message.type,
+            paymentId: null,
+          });
+          results.push({
+            duplicate: true,
+            messageId: message.whatsappMessageId,
+            type: message.type,
+          });
+          continue;
+        }
+
+        const sendResult = processed.reply
+          ? await sendWhatsAppText({
+              body: processed.reply,
+              toPhone: processed.fromPhone,
+            })
+          : null;
+
+        debugWhatsApp("Text message processed", {
+          command: processed.command?.name ?? null,
+          duplicate: false,
+          fromPhone: processed.fromPhone,
+          messageId: message.whatsappMessageId,
+          messageType: message.type,
+          paymentId: null,
+          sent: sendResult?.ok ?? false,
+        });
         results.push({
-          duplicate: processed.duplicate,
+          duplicate: false,
           messageId: message.whatsappMessageId,
           sent: sendResult?.ok ?? false,
           type: message.type,
@@ -148,43 +267,45 @@ export async function POST(request: Request) {
         continue;
       }
 
+      const mediaDescription = [
+        `whatsapp-media:${message.mediaId}`,
+        message.mimeType ? `mime=${message.mimeType}` : null,
+        message.sha256 ? `sha256=${message.sha256}` : null,
+      ]
+        .filter(Boolean)
+        .join(";");
       const inbound = await recordInboundWhatsAppMessage({
         body: message.caption,
         fromPhone: message.fromPhone,
-        mediaUrl: `whatsapp-media:${message.mediaId}`,
+        mediaUrl: mediaDescription,
         messageType: "image",
         whatsappMessageId: message.whatsappMessageId,
       });
       imageLogId = inbound.logId;
 
       if (inbound.duplicate) {
+        debugWhatsApp("Webhook message result", {
+          duplicate: true,
+          messageId: message.whatsappMessageId,
+          messageType: message.type,
+          paymentId: null,
+        });
         results.push({
           duplicate: true,
           messageId: message.whatsappMessageId,
-          sent: false,
           type: message.type,
         });
         continue;
       }
 
+      if (!inbound.userId) {
+        throw new Error("Pengguna WhatsApp tidak ditemukan.");
+      }
+
       const media = await downloadWhatsAppMedia(message.mediaId);
 
       if (!media.ok) {
-        await updateInboundWhatsAppStatus(imageLogId!, "failed");
-        const reply =
-          "Bukti belum bisa diunduh dari WhatsApp. Coba kirim ulang atau upload dari dashboard.";
-        const sendResult = await sendWhatsAppText({
-          body: reply,
-          toPhone: inbound.fromPhone,
-        });
-
-        results.push({
-          error: media.error,
-          messageId: message.whatsappMessageId,
-          sent: sendResult.ok,
-          type: message.type,
-        });
-        continue;
+        throw new Error(`Media download failed: ${media.error}`);
       }
 
       const file = new File([Uint8Array.from(media.buffer)], media.filename, {
@@ -203,7 +324,17 @@ export async function POST(request: Request) {
         toPhone: inbound.fromPhone,
       });
 
+      debugWhatsApp("Image message processed", {
+        duplicate: false,
+        fromPhone: inbound.fromPhone,
+        messageId: message.whatsappMessageId,
+        messageType: message.type,
+        paymentId: proofResult.paymentId,
+        sent: sendResult.ok,
+        status: proofResult.status,
+      });
       results.push({
+        duplicate: false,
         messageId: message.whatsappMessageId,
         paymentId: proofResult.paymentId,
         sent: sendResult.ok,
@@ -214,22 +345,48 @@ export async function POST(request: Request) {
       if (imageLogId) {
         await updateInboundWhatsAppStatus(imageLogId, "failed").catch(
           (statusError) => {
-            console.error("Failed to mark WhatsApp image message as failed", statusError);
+            console.error(
+              "[WhatsApp] Failed to mark inbound image as failed",
+              statusError,
+            );
           },
         );
       }
 
-      console.error("Failed to process WhatsApp webhook message", error);
-      results.push({
+      console.error("[WhatsApp] Message processing failed", {
         error: error instanceof Error ? error.message : "Unknown error",
+        fromPhone: message.fromPhone,
         messageId: message.whatsappMessageId,
-        sent: false,
+        messageType: message.type,
+      });
+
+      const failureReplySent = await sendProcessingFailure(message.fromPhone).catch(
+        (sendError) => {
+          console.error("[WhatsApp] Failure reply could not be sent", {
+            error:
+              sendError instanceof Error ? sendError.message : "Unknown error",
+            messageId: message.whatsappMessageId,
+          });
+          return false;
+        },
+      );
+
+      results.push({
+        failed: true,
+        failureReplySent,
+        messageId: message.whatsappMessageId,
+        type: message.type,
       });
     }
   }
 
+  const duplicates = results.filter((result) => result.duplicate === true).length;
+
   return Response.json({
-    processed: results.length,
-    results,
+    duplicates,
+    ignored: parsed.ignoredMessageTypes.length + duplicates,
+    processed: results.length - duplicates,
+    received: true,
+    ...(process.env.NODE_ENV !== "production" ? { results } : {}),
   });
 }

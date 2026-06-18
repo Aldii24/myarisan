@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+
 type WhatsAppMediaDownload =
   | {
       buffer: Buffer;
@@ -27,10 +29,10 @@ function extensionForContentType(contentType: string) {
 export async function downloadWhatsAppMedia(
   mediaId: string,
 ): Promise<WhatsAppMediaDownload> {
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
-  const apiVersion = process.env.WHATSAPP_API_VERSION?.trim() || "v20.0";
+  const config = getWhatsAppConfig();
+  reportMissingWhatsAppEnv(["WHATSAPP_ACCESS_TOKEN"], "media");
 
-  if (!accessToken) {
+  if (!config.accessToken) {
     return {
       error: "WHATSAPP_ACCESS_TOKEN belum diatur.",
       ok: false,
@@ -39,10 +41,10 @@ export async function downloadWhatsAppMedia(
 
   try {
     const metadataResponse = await fetch(
-      `https://graph.facebook.com/${apiVersion}/${encodeURIComponent(mediaId)}`,
+      `https://graph.facebook.com/${config.apiVersion}/${encodeURIComponent(mediaId)}`,
       {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${config.accessToken}`,
         },
       },
     );
@@ -61,7 +63,7 @@ export async function downloadWhatsAppMedia(
 
     const mediaResponse = await fetch(metadata.url, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${config.accessToken}`,
       },
     });
 

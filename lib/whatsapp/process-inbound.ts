@@ -30,6 +30,10 @@ export async function processInboundWhatsAppText(input: {
     };
   }
 
+  if (!inbound.userId) {
+    throw new Error("Pengguna WhatsApp tidak ditemukan.");
+  }
+
   try {
     const command = parseWhatsAppCommand(input.text);
     const reply = await handleWhatsAppCommand({

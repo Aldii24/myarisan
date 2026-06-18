@@ -45,6 +45,35 @@ export async function recordInboundWhatsAppMessage(input: {
     throw new Error("Nomor WhatsApp tidak valid.");
   }
 
+  const [existingLog] = await db
+    .select({
+      fromPhone: messageLogs.fromPhone,
+      userId: messageLogs.userId,
+    })
+    .from(messageLogs)
+    .where(eq(messageLogs.whatsappMessageId, input.whatsappMessageId))
+    .limit(1);
+
+  if (existingLog) {
+    const existingUser = existingLog.userId
+      ? await db
+          .select({
+            serviceWindowUntil: users.serviceWindowUntil,
+          })
+          .from(users)
+          .where(eq(users.id, existingLog.userId))
+          .limit(1)
+      : [];
+
+    return {
+      duplicate: true,
+      fromPhone: existingLog.fromPhone ?? normalizedPhone,
+      logId: null,
+      serviceWindowUntil: existingUser[0]?.serviceWindowUntil ?? new Date(0),
+      userId: existingLog.userId,
+    };
+  }
+
   const user = await ensureWhatsAppUser(normalizedPhone);
   const now = new Date();
   const serviceWindowUntil = new Date(now.getTime() + serviceWindowMilliseconds);
@@ -78,7 +107,7 @@ export async function recordInboundWhatsAppMessage(input: {
     fromPhone: normalizedPhone,
     logId: inboundLog?.id ?? null,
     serviceWindowUntil,
-    userId: user.id,
+    userId: user.id as string | null,
   };
 }
 

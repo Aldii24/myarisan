@@ -1,11 +1,6 @@
-import {
-  Card as TremorCard,
-  Grid as TremorGrid,
-  Metric,
-  Text,
-} from "@tremor/react";
 import type { LucideIcon } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export type DashboardMetric = {
@@ -25,20 +20,20 @@ const toneClasses = {
 
 export function MetricCards({ metrics }: { metrics: DashboardMetric[] }) {
   return (
-    <TremorGrid className="gap-3 md:gap-4" numItems={2} numItemsLg={4}>
+    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
       {metrics.map((metric) => {
         const Icon = metric.icon;
         const tone = metric.tone ?? "emerald";
 
         return (
-          <TremorCard
+          <Card
             className="min-w-0 rounded-xl border border-white/90 bg-white p-4 shadow-sm ring-0"
             key={metric.label}
           >
             <div className="flex items-start justify-between gap-2">
-              <Text className="min-w-0 text-xs font-medium leading-5 text-zinc-500">
+              <p className="min-w-0 text-xs font-medium leading-5 text-zinc-500">
                 {metric.label}
-              </Text>
+              </p>
               {Icon ? (
                 <span
                   className={cn(
@@ -50,12 +45,12 @@ export function MetricCards({ metrics }: { metrics: DashboardMetric[] }) {
                 </span>
               ) : null}
             </div>
-            <Metric className="mt-2 break-words text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
+            <p className="mt-2 break-words text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
               {metric.value}
-            </Metric>
-          </TremorCard>
+            </p>
+          </Card>
         );
       })}
-    </TremorGrid>
+    </div>
   );
 }

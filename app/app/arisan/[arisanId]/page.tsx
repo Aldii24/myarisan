@@ -1,10 +1,4 @@
 import {
-  Card as TremorCard,
-  Grid as TremorGrid,
-  Metric,
-  Text,
-} from "@tremor/react";
-import {
   ArrowRight,
   CalendarDays,
   CheckCircle2,
@@ -285,32 +279,28 @@ async function AdminDashboard({
             </Alert>
           ) : null}
 
-          <TremorGrid
-            className="gap-3 md:gap-4"
-            numItems={2}
-            numItemsLg={4}
-          >
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {metrics.map((item) => {
               const Icon = item.icon;
 
               return (
-                <TremorCard
+                <Card
                   className="rounded-xl border border-white/80 bg-white p-4 shadow-sm ring-0"
                   key={item.label}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <Text className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-zinc-500">
                       {item.label}
-                    </Text>
+                    </p>
                     <Icon className={cn("size-4", item.tone)} />
                   </div>
-                  <Metric className="mt-2 text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
+                  <p className="mt-2 text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
                     {item.value}
-                  </Metric>
-                </TremorCard>
+                  </p>
+                </Card>
               );
             })}
-          </TremorGrid>
+          </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
             <Card className="bg-white shadow-sm">
@@ -575,32 +565,28 @@ async function MemberDashboard({
             </CardContent>
           </Card>
 
-          <TremorGrid
-            className="gap-3 md:gap-4"
-            numItems={2}
-            numItemsLg={4}
-          >
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
             {metrics.map((item) => {
               const Icon = item.icon;
 
               return (
-                <TremorCard
+                <Card
                   className="rounded-xl border border-white/80 bg-white p-4 shadow-sm ring-0"
                   key={item.label}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <Text className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-zinc-500">
                       {item.label}
-                    </Text>
+                    </p>
                     <Icon className="size-4 text-emerald-700" />
                   </div>
-                  <Metric className="mt-2 text-lg font-semibold tracking-tight text-zinc-950 md:text-xl">
+                  <p className="mt-2 text-lg font-semibold tracking-tight text-zinc-950 md:text-xl">
                     {item.value}
-                  </Metric>
-                </TremorCard>
+                  </p>
+                </Card>
               );
             })}
-          </TremorGrid>
+          </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
             <Card className="bg-white shadow-sm">

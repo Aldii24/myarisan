@@ -9,8 +9,18 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "MyArisan",
-  description: "Kelola arisan lebih tenang.",
+  metadataBase: new URL("https://myarisan.vercel.app"),
+  title: {
+    default: "MyArisan — Rekap arisan lebih tenang",
+    template: "%s | MyArisan",
+  },
+  description:
+    "Catat bukti setoran, cek siapa sudah atau belum bayar, dan buat rekap arisan siap kirim ke grup WhatsApp.",
+  openGraph: {
+    siteName: "MyArisan",
+    locale: "id_ID",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

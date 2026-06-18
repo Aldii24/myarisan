@@ -18,6 +18,7 @@ import { getPackageStatus } from "@/lib/subscription";
 
 import type { WhatsAppCommand } from "./command-parser";
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+import { beginResetPin } from "./handle-reset-pin";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
@@ -310,6 +311,6 @@ export async function handleWhatsAppCommand(input: {
     case "dashboard":
       return `Buka dashboard MyArisan: ${dashboardUrl("/app")}`;
     case "reset-pin":
-      return "Untuk reset PIN, buka dashboard atau gunakan flow reset PIN yang tersedia.";
+      return beginResetPin(input.userId);
   }
 }

@@ -121,6 +121,10 @@ export const users = pgTable(
     pinHash: text("pin_hash"),
     lastInboundAt: timestamp("last_inbound_at", { withTimezone: true }),
     serviceWindowUntil: timestamp("service_window_until", { withTimezone: true }),
+    pendingAction: varchar("pending_action", { length: 32 }),
+    pendingActionExpiresAt: timestamp("pending_action_expires_at", {
+      withTimezone: true,
+    }),
     ...timestamps(),
   },
   (table) => [
@@ -162,6 +166,7 @@ export const memberships = pgTable(
     role: membershipRoleEnum("role").notNull().default("member"),
     displayName: varchar("display_name", { length: 160 }).notNull(),
     joinStatus: joinStatusEnum("join_status").notNull().default("invited"),
+    turnOrder: integer("turn_order"),
     ...timestamps(),
   },
   (table) => [

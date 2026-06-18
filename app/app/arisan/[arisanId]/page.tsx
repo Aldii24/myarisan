@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CalendarClock,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
@@ -83,14 +84,6 @@ function NotFoundCard() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function SoonButton({ children }: { children: React.ReactNode }) {
-  return (
-    <Button disabled type="button" variant="outline">
-      {children}
-    </Button>
   );
 }
 
@@ -390,9 +383,9 @@ async function AdminDashboard({
                     label: "Tambah Anggota",
                   },
                   {
-                    href: `/app/arisan/${arisanId}/members`,
-                    icon: Users,
-                    label: "Lihat Anggota",
+                    href: `/app/arisan/${arisanId}/giliran`,
+                    icon: CalendarClock,
+                    label: "Atur Giliran",
                   },
                   {
                     href: `/app/arisan/${arisanId}/payments`,
@@ -650,8 +643,18 @@ async function MemberDashboard({
                   </Alert>
                 ) : null}
                 <div className="grid grid-cols-2 gap-2">
-                  <SoonButton>Riwayat Bayar</SoonButton>
-                  <SoonButton>Lihat Giliran</SoonButton>
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    href={`/app/arisan/${arisanId}/riwayat`}
+                  >
+                    Riwayat Bayar
+                  </Link>
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    href={`/app/arisan/${arisanId}/giliran`}
+                  >
+                    Lihat Giliran
+                  </Link>
                 </div>
               </CardContent>
             </Card>

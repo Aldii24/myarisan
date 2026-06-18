@@ -232,7 +232,9 @@ export async function createPaymentProofFromUpload(input: {
       ),
     );
   const note = input.note?.trim() || null;
-  const ocrText = await extractTextFromImage(storedFile.publicPath);
+  const ocrText = await extractTextFromImage(
+    Buffer.from(await input.file.arrayBuffer()),
+  );
   const aiResult = await parsePaymentProofWithAI({
     activePeriodName: activePeriod.name,
     arisanAmountPerPeriod: group.amountPerPeriod,

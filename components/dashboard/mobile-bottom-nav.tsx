@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   LayoutDashboard,
   Package as PackageIcon,
   Upload,
@@ -32,6 +33,12 @@ function getItems(arisanId: string, role: "admin" | "member"): NavItem[] {
         id: "bayar",
         label: "Bayar",
       },
+      {
+        href: `/app/arisan/${arisanId}/giliran`,
+        icon: CalendarClock,
+        id: "giliran",
+        label: "Giliran",
+      },
     ];
   }
 
@@ -55,6 +62,12 @@ function getItems(arisanId: string, role: "admin" | "member"): NavItem[] {
       label: "Anggota",
     },
     {
+      href: `/app/arisan/${arisanId}/giliran`,
+      icon: CalendarClock,
+      id: "giliran",
+      label: "Giliran",
+    },
+    {
       href: `/app/arisan/${arisanId}/paket`,
       icon: PackageIcon,
       id: "paket",
@@ -62,6 +75,13 @@ function getItems(arisanId: string, role: "admin" | "member"): NavItem[] {
     },
   ];
 }
+
+const gridColsByCount: Record<number, string> = {
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+};
 
 export function MobileBottomNav({
   activeItem,
@@ -72,14 +92,16 @@ export function MobileBottomNav({
   arisanId: string;
   role: "admin" | "member";
 }) {
+  const items = getItems(arisanId, role);
+
   return (
     <Card
       className={cn(
         "fixed inset-x-3 bottom-3 z-50 grid gap-0 border-white/90 bg-white/92 px-1 py-1 shadow-2xl shadow-zinc-900/15 backdrop-blur-xl lg:hidden",
-        role === "admin" ? "grid-cols-4" : "grid-cols-2",
+        gridColsByCount[items.length] ?? "grid-cols-4",
       )}
     >
-      {getItems(arisanId, role).map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         const active = item.id === activeItem;
 

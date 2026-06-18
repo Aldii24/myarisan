@@ -1,16 +1,48 @@
 import "server-only";
 
-export async function extractTextFromImage(imagePathOrUrl: string): Promise<string> {
-  try {
-    if (!imagePathOrUrl) {
-      return "";
-    }
+import { createWorker, type Worker } from "tesseract.js";
 
-    // TODO: Replace this placeholder with a production OCR provider such as
-    // Tesseract, Google Vision, OCR.space, or another reliable image OCR service.
+const ocrLanguages = "ind+eng";
+const ocrTimeoutMs = 20000;
+
+let workerPromise: Promise<Worker> | null = null;
+
+async function getWorker() {
+  if (!workerPromise) {
+    workerPromise = createWorker(ocrLanguages).catch((error) => {
+      workerPromise = null;
+      throw error;
+    });
+  }
+
+  return workerPromise;
+}
+
+export async function extractTextFromImage(
+  image: Buffer | Uint8Array | null | undefined,
+): Promise<string> {
+  if (!image || image.byteLength === 0) {
     return "";
+  }
+
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+
+  try {
+    const worker = await getWorker();
+    const buffer = Buffer.isBuffer(image) ? image : Buffer.from(image);
+    const recognition = worker.recognize(buffer);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => reject(new Error("OCR timed out.")), ocrTimeoutMs);
+    });
+    const { data } = await Promise.race([recognition, timeoutPromise]);
+
+    return data.text.trim();
   } catch (error) {
     console.warn("OCR extraction failed", error);
     return "";
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarClock,
   LayoutDashboard,
   Package as PackageIcon,
   ReceiptText,
@@ -31,6 +32,12 @@ function desktopItems(arisanId: string, role: "admin" | "member") {
         id: "bayar",
         label: "Kirim Bukti",
       },
+      {
+        href: `/app/arisan/${arisanId}/giliran`,
+        icon: CalendarClock,
+        id: "giliran",
+        label: "Giliran",
+      },
     ];
   }
 
@@ -52,6 +59,12 @@ function desktopItems(arisanId: string, role: "admin" | "member") {
       icon: Users,
       id: "anggota",
       label: "Anggota",
+    },
+    {
+      href: `/app/arisan/${arisanId}/giliran`,
+      icon: CalendarClock,
+      id: "giliran",
+      label: "Giliran",
     },
     {
       href: `/app/arisan/${arisanId}/paket`,
@@ -78,9 +91,11 @@ export function DashboardShell({
       ? "anggota"
       : pathname.includes("/paket")
         ? "paket"
-        : pathname.includes("/bayar")
-          ? "bayar"
-          : "ringkasan";
+        : pathname.includes("/giliran")
+          ? "giliran"
+          : pathname.includes("/bayar")
+            ? "bayar"
+            : "ringkasan";
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_right,_rgba(224,231,255,0.72)_0,_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(209,250,229,0.72)_0,_transparent_26%),#f7f4ee] px-4 py-4 pb-24 sm:px-6 lg:px-8 lg:py-6 lg:pb-8">

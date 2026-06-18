@@ -10,7 +10,7 @@ export async function createAuditLog(input: {
   arisanGroupId: string;
   beforeJson?: Record<string, unknown>;
   entityId: string;
-  entityType: "invoice" | "payment" | "subscription";
+  entityType: "invoice" | "membership" | "payment" | "period" | "subscription";
 }) {
   try {
     await db.insert(auditLogs).values(input);

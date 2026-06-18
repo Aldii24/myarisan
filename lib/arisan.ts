@@ -302,6 +302,53 @@ export async function getMemberDashboardData(arisanId: string, userId: string) {
   };
 }
 
+export async function getMemberPaymentHistory(arisanId: string, userId: string) {
+  const [group] = await db
+    .select({
+      amountPerPeriod: arisanGroups.amountPerPeriod,
+      id: arisanGroups.id,
+      name: arisanGroups.name,
+    })
+    .from(arisanGroups)
+    .where(eq(arisanGroups.id, arisanId))
+    .limit(1);
+
+  if (!group) {
+    return null;
+  }
+
+  const rows = await db
+    .select({
+      amount: payments.amount,
+      confirmedAt: payments.confirmedAt,
+      createdAt: payments.createdAt,
+      id: payments.id,
+      note: payments.note,
+      periodDueDate: periods.dueDate,
+      periodName: periods.name,
+      proofImageUrl: payments.proofImageUrl,
+      status: payments.status,
+    })
+    .from(payments)
+    .innerJoin(periods, eq(periods.id, payments.periodId))
+    .where(
+      and(
+        eq(payments.arisanGroupId, arisanId),
+        eq(payments.memberUserId, userId),
+      ),
+    )
+    .orderBy(desc(periods.dueDate), desc(payments.createdAt));
+
+  const confirmed = rows.filter((row) => row.status === "confirmed");
+
+  return {
+    confirmedCount: confirmed.length,
+    group,
+    payments: rows,
+    totalPaid: confirmed.reduce((total, row) => total + (row.amount ?? 0), 0),
+  };
+}
+
 export async function getMemberPaymentUploadData(arisanId: string, userId: string) {
   const dashboard = await getMemberDashboardData(arisanId, userId);
 

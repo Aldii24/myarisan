@@ -1,7 +1,9 @@
 import "server-only";
 
-import { parseWhatsAppCommand } from "./command-parser";
+import { parseWhatsAppCommand, type WhatsAppCommand } from "./command-parser";
+import { getPendingAction } from "./conversation-state";
 import { handleWhatsAppCommand } from "./handle-command";
+import { handleResetPinInput } from "./handle-reset-pin";
 import {
   recordInboundWhatsAppMessage,
   updateInboundWhatsAppStatus,
@@ -35,11 +37,23 @@ export async function processInboundWhatsAppText(input: {
   }
 
   try {
-    const command = parseWhatsAppCommand(input.text);
-    const reply = await handleWhatsAppCommand({
-      command,
-      userId: inbound.userId,
-    });
+    // A user mid-flow (e.g. awaiting a new PIN) has their next message routed to
+    // that flow instead of the command parser, so "1234" is read as the PIN and
+    // not as an unknown command.
+    const pendingAction = await getPendingAction(inbound.userId);
+
+    let command: WhatsAppCommand | null = null;
+    let reply: string;
+
+    if (pendingAction === "reset_pin") {
+      reply = await handleResetPinInput(inbound.userId, input.text);
+    } else {
+      command = parseWhatsAppCommand(input.text);
+      reply = await handleWhatsAppCommand({
+        command,
+        userId: inbound.userId,
+      });
+    }
 
     await updateInboundWhatsAppStatus(inbound.logId!, "processed");
 

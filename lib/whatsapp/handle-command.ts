@@ -179,8 +179,8 @@ Setoran: ${formatRupiah(dashboard.group.amountPerPeriod)}
 Rekening admin:
 ${dashboard.group.bankAccountText ?? "Belum diisi"}
 
-Upload bukti dari dashboard untuk sekarang:
-${dashboardUrl(`/app/arisan/${membership.arisanGroupId}/bayar`)}`;
+Setelah transfer, kirim foto bukti bayar di chat ini.
+Dashboard: ${dashboardUrl(`/app/arisan/${membership.arisanGroupId}/bayar`)}`;
 }
 
 async function handleRecap(memberships: Membership[]) {

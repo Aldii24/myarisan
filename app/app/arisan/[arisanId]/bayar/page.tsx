@@ -126,7 +126,8 @@ export default async function BayarPage({
               />
             ) : (
               <p className="rounded-3xl border border-white/60 bg-white/45 p-4 text-sm leading-6 text-zinc-600">
-                {data.payment?.status === "pending"
+                {data.payment?.status === "pending" ||
+                data.payment?.status === "duplicate_check"
                   ? "Bukti kamu sedang dicek admin."
                   : "Pembayaran periode ini sudah diterima admin."}
               </p>

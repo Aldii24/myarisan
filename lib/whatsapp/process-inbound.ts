@@ -3,6 +3,8 @@ import "server-only";
 import { parseWhatsAppCommand, type WhatsAppCommand } from "./command-parser";
 import { getPendingAction } from "./conversation-state";
 import { handleWhatsAppCommand } from "./handle-command";
+import { handleCreateArisanInput } from "./handle-create-arisan";
+import { handleKonfirmasiInput } from "./handle-konfirmasi";
 import { handleResetPinInput } from "./handle-reset-pin";
 import {
   recordInboundWhatsAppMessage,
@@ -45,8 +47,20 @@ export async function processInboundWhatsAppText(input: {
     let command: WhatsAppCommand | null = null;
     let reply: string;
 
-    if (pendingAction === "reset_pin") {
+    if (pendingAction?.action === "reset_pin") {
       reply = await handleResetPinInput(inbound.userId, input.text);
+    } else if (pendingAction?.action === "create_arisan") {
+      reply = await handleCreateArisanInput(
+        inbound.userId,
+        input.text,
+        pendingAction,
+      );
+    } else if (pendingAction?.action === "confirm_payment") {
+      reply = await handleKonfirmasiInput(
+        inbound.userId,
+        input.text,
+        pendingAction,
+      );
     } else {
       command = parseWhatsAppCommand(input.text);
       reply = await handleWhatsAppCommand({

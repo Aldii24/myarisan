@@ -10,8 +10,22 @@ import {
   type ParsedPaymentProof,
 } from "@/lib/ai/payment-proof-parser";
 import { extractTextFromImage } from "@/lib/ocr";
+import {
+  findDuplicatePayment,
+  type DuplicateReason,
+} from "@/lib/payments/detect-duplicate";
 import { savePaymentProofFile, validatePaymentProofFile } from "@/lib/storage";
 import { canUseAutomaticProof, incrementProofUsage } from "@/lib/subscription";
+
+// PRD §14.5 duplicate message, surfaced to admin review.
+const duplicateNotice = "Bukti ini mirip dengan pembayaran yang sudah pernah dikirim.";
+
+const duplicateReasonLabels: Record<DuplicateReason, string> = {
+  image: "Gambar bukti sama dengan bukti yang pernah diunggah.",
+  reference: "Nomor referensi transaksi sama dengan bukti lain.",
+  sender_amount:
+    "Nominal dan nama pengirim sama dengan bukti anggota lain di periode ini.",
+};
 
 export type CreatePaymentProofResult =
   | {
@@ -19,10 +33,12 @@ export type CreatePaymentProofResult =
       arisanName: string;
       automaticReadFailed: boolean;
       detectedAmount: number | null;
+      duplicateOfPaymentId: string | null;
+      isDuplicate: boolean;
       memberDisplayName: string;
       ok: true;
       paymentId: string;
-      status: "pending";
+      status: "duplicate_check" | "pending";
       warnings: string[];
     }
   | {
@@ -245,10 +261,33 @@ export async function createPaymentProofFromUpload(input: {
     ocrText,
     submittedAmount: amount,
   });
-  const duplicateOfPaymentId =
-    sameHashPayment && sameHashPayment.id !== existingPayment?.id
-      ? sameHashPayment.id
-      : null;
+
+  // Authoritative duplicate check across the whole arisan, using both the image
+  // hash and the AI-read reference number / sender name. Suspected duplicates
+  // never auto-confirm — they go to a dedicated admin-review status.
+  const duplicateMatch = await findDuplicatePayment({
+    amount,
+    arisanId: input.arisanId,
+    detectedReferenceNo: aiResult.detectedReferenceNo,
+    detectedSenderName: aiResult.detectedSenderName,
+    excludePaymentId: existingPayment?.id ?? null,
+    memberUserId: input.userId,
+    periodId: activePeriod.id,
+    proofImageHash: storedFile.hash,
+  });
+  const isDuplicate = Boolean(duplicateMatch);
+  const duplicateOfPaymentId = duplicateMatch?.paymentId ?? null;
+
+  if (duplicateMatch) {
+    aiResult.warnings = Array.from(
+      new Set([
+        ...aiResult.warnings,
+        duplicateNotice,
+        ...duplicateMatch.reasons.map((reason) => duplicateReasonLabels[reason]),
+      ]),
+    );
+  }
+
   const values = {
     aiResultJson: aiResult as unknown as Record<string, unknown>,
     amount,
@@ -257,11 +296,15 @@ export async function createPaymentProofFromUpload(input: {
     ocrText,
     proofImageHash: storedFile.hash,
     proofImageUrl: storedFile.publicPath,
-    status: "pending" as const,
+    status: isDuplicate ? ("duplicate_check" as const) : ("pending" as const),
   };
   let paymentId: string;
 
-  if (existingPayment?.status === "rejected" || existingPayment?.status === "pending") {
+  if (
+    existingPayment?.status === "rejected" ||
+    existingPayment?.status === "pending" ||
+    existingPayment?.status === "duplicate_check"
+  ) {
     const [updatedPayment] = await db
       .update(payments)
       .set({
@@ -298,10 +341,12 @@ export async function createPaymentProofFromUpload(input: {
     arisanName: group.name,
     automaticReadFailed: paymentReadFailed(aiResult),
     detectedAmount: aiResult.detectedAmount,
+    duplicateOfPaymentId,
+    isDuplicate,
     memberDisplayName: membership.displayName,
     ok: true,
     paymentId,
-    status: "pending",
+    status: isDuplicate ? "duplicate_check" : "pending",
     warnings: paymentReadFailed(aiResult)
       ? Array.from(new Set([...aiResult.warnings, "Bukti perlu dicek manual."]))
       : aiResult.warnings,

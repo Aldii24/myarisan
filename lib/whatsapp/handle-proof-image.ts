@@ -25,10 +25,14 @@ async function notifyAdmin(input: {
   adminUserId: string;
   arisanId: string;
   arisanName: string;
+  isDuplicate: boolean;
   memberDisplayName: string;
   paymentId: string;
 }) {
-  const dashboardMessage = `${input.memberDisplayName} mengirim bukti pembayaran melalui WhatsApp. Status: Menunggu Dicek.`;
+  const duplicateHint = input.isDuplicate
+    ? " Bukti ini mirip dengan pembayaran yang sudah pernah dikirim."
+    : "";
+  const dashboardMessage = `${input.memberDisplayName} mengirim bukti pembayaran melalui WhatsApp. Status: Menunggu Dicek.${duplicateHint}`;
 
   try {
     await db.insert(dashboardNotifications).values({
@@ -57,7 +61,7 @@ async function notifyAdmin(input: {
 
   await sendWhatsAppText({
     body: `Bukti pembayaran baru dari ${input.memberDisplayName} untuk ${input.arisanName}.
-Status: Menunggu Dicek.
+Status: Menunggu Dicek.${duplicateHint}
 ${getAppUrl()}/app/arisan/${input.arisanId}/payments/${input.paymentId}`,
     toPhone: admin.phone,
   });
@@ -122,19 +126,23 @@ export async function handleWhatsAppProofImage(input: {
     adminUserId: result.adminUserId,
     arisanId: membership.arisanId,
     arisanName: result.arisanName,
+    isDuplicate: result.isDuplicate,
     memberDisplayName: result.memberDisplayName,
     paymentId: result.paymentId,
   });
 
-  const replyParts = [
-    "Bukti bayar diterima ✅ Status: menunggu dicek admin.",
-  ];
+  const replyParts = result.isDuplicate
+    ? [
+        "Bukti diterima, tapi mirip dengan pembayaran yang sudah pernah dikirim.",
+        "Status: perlu dicek admin.",
+      ]
+    : ["Bukti bayar diterima ✅ Status: menunggu dicek admin."];
 
   if (result.detectedAmount) {
     replyParts.push(`Nominal terbaca: ${formatRupiah(result.detectedAmount)}`);
   }
 
-  if (result.warnings.length > 0) {
+  if (!result.isDuplicate && result.warnings.length > 0) {
     replyParts.push("Ada data yang perlu dicek admin.");
   }
 

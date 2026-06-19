@@ -222,8 +222,10 @@ export async function getArisanDashboardData(arisanId: string) {
     group,
     memberCount: memberRows.length,
     paidCount: confirmedPayments.length,
-    pendingCount: activePeriodPayments.filter((payment) => payment.status === "pending")
-      .length,
+    pendingCount: activePeriodPayments.filter(
+      (payment) =>
+        payment.status === "pending" || payment.status === "duplicate_check",
+    ).length,
     rejectedCount: activePeriodPayments.filter((payment) => payment.status === "rejected")
       .length,
     totalCollected: confirmedPayments.reduce(
@@ -366,6 +368,7 @@ export async function getAdminPayments(arisanId: string) {
       amount: payments.amount,
       confirmedAt: payments.confirmedAt,
       createdAt: payments.createdAt,
+      duplicateOfPaymentId: payments.duplicateOfPaymentId,
       id: payments.id,
       memberName: memberships.displayName,
       note: payments.note,
@@ -393,6 +396,7 @@ export async function getAdminPaymentDetail(arisanId: string, paymentId: string)
       amount: payments.amount,
       confirmedAt: payments.confirmedAt,
       createdAt: payments.createdAt,
+      duplicateOfPaymentId: payments.duplicateOfPaymentId,
       id: payments.id,
       memberName: memberships.displayName,
       note: payments.note,
@@ -465,6 +469,59 @@ export async function getCurrentMemberLimit(arisanId: string) {
   const limits = await getSubscriptionPlanLimits(arisanId);
 
   return limits.maxMembers;
+}
+
+export async function createArisanGroup(input: {
+  adminUserId: string;
+  adminDisplayName: string;
+  name: string;
+  amountPerPeriod: number;
+  periodType: "weekly" | "monthly";
+  dueDay: number;
+  bankAccountText: string;
+}) {
+  const now = new Date();
+  const dueDate = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), input.dueDay),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const activePeriod = buildActivePeriod(input.periodType, dueDate);
+  const joinCode = await generateUniqueJoinCode();
+
+  const [group] = await db
+    .insert(arisanGroups)
+    .values({
+      adminUserId: input.adminUserId,
+      amountPerPeriod: input.amountPerPeriod,
+      bankAccountText: input.bankAccountText,
+      dueDay: input.dueDay,
+      joinCode,
+      name: input.name,
+      periodType: input.periodType,
+      status: "active",
+    })
+    .returning({ id: arisanGroups.id });
+
+  await db.insert(memberships).values({
+    arisanGroupId: group.id,
+    displayName: input.adminDisplayName,
+    joinStatus: "claimed",
+    role: "admin",
+    userId: input.adminUserId,
+  });
+
+  await db.insert(periods).values({
+    arisanGroupId: group.id,
+    dueDate: activePeriod.dueDate,
+    name: activePeriod.name,
+    startDate: activePeriod.startDate,
+    status: "active",
+  });
+
+  await attachFreePlanIfAvailable(group.id, input.adminUserId);
+
+  return { id: group.id, joinCode };
 }
 
 export async function attachFreePlanIfAvailable(arisanId: string, adminUserId: string) {

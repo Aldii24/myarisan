@@ -122,6 +122,7 @@ export const users = pgTable(
     lastInboundAt: timestamp("last_inbound_at", { withTimezone: true }),
     serviceWindowUntil: timestamp("service_window_until", { withTimezone: true }),
     pendingAction: varchar("pending_action", { length: 32 }),
+    pendingActionData: jsonb("pending_action_data").$type<Record<string, unknown>>(),
     pendingActionExpiresAt: timestamp("pending_action_expires_at", {
       withTimezone: true,
     }),

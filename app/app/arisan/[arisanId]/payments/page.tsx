@@ -94,11 +94,18 @@ function PaymentSection({
                         {payment.note}
                       </p>
                     ) : null}
-                    {warnings.length > 0 ? (
-                      <p className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
-                        Perlu dicek
-                      </p>
-                    ) : null}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {payment.status === "duplicate_check" ? (
+                        <span className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900">
+                          Bukti mirip
+                        </span>
+                      ) : null}
+                      {warnings.length > 0 ? (
+                        <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                          Perlu dicek
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="mt-3 text-xs font-medium text-zinc-500">
                       {formatDateTimeLabel(payment.createdAt)}
                     </p>
@@ -137,7 +144,10 @@ export default async function AdminPaymentsPage({
   }
 
   const paymentRows = await getAdminPayments(arisanId);
-  const pendingPayments = paymentRows.filter((payment) => payment.status === "pending");
+  const pendingPayments = paymentRows.filter(
+    (payment) =>
+      payment.status === "pending" || payment.status === "duplicate_check",
+  );
   const confirmedPayments = paymentRows.filter(
     (payment) => payment.status === "confirmed",
   );

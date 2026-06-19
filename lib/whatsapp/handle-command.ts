@@ -10,14 +10,19 @@ import {
   formatDateTimeLabel,
   formatRupiah,
   getArisanDashboardData,
+  getArisanMembers,
   getMemberDashboardData,
+  getMemberPaymentHistory,
   paymentStatusLabel,
 } from "@/lib/arisan";
 import { getUserMemberships } from "@/lib/auth/user";
+import { getGiliranData } from "@/lib/giliran";
 import { getPackageStatus } from "@/lib/subscription";
 
 import type { WhatsAppCommand } from "./command-parser";
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+import { beginCreateArisan } from "./handle-create-arisan";
+import { beginKonfirmasi } from "./handle-konfirmasi";
 import { beginResetPin } from "./handle-reset-pin";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
@@ -40,21 +45,42 @@ function memberMenu() {
   return `Menu anggota MyArisan
 - status
 - bayar
+- rekening
+- giliran
+- riwayat
 - dashboard
 - join <kode>
+- bantuan
 - reset pin`;
 }
 
 function adminMenu() {
   return `Menu admin MyArisan
+- buat arisan
 - status
 - rekap
+- belum bayar
 - tagih
 - konfirmasi
+- anggota
+- giliran
 - paket
 - dashboard
-- join <kode>
+- bantuan
 - reset pin`;
+}
+
+function helpText(memberships: Membership[]) {
+  const isAdmin = adminMemberships(memberships).length > 0;
+  const menu = isAdmin ? adminMenu() : memberMenu();
+
+  return `Bantuan MyArisan
+Ketik salah satu perintah berikut:
+
+${menu}
+
+Kirim foto bukti transfer kapan saja untuk dicatat sebagai pembayaran.
+Ketik BATAL untuk membatalkan langkah yang sedang berjalan.`;
 }
 
 function joinHelp() {
@@ -238,25 +264,6 @@ ${dashboard.unpaidMembers.map((name) => `- ${name}`).join("\n")}
 Silakan transfer ke rekening admin dan kirim bukti melalui MyArisan.`;
 }
 
-async function handleConfirmation(memberships: Membership[]) {
-  const selected = selectSingleAdmin(memberships);
-
-  if (!selected.membership) {
-    return selected.error!;
-  }
-
-  const dashboard = await getArisanDashboardData(selected.membership.arisanGroupId);
-
-  if (!dashboard) {
-    return "Data arisan tidak ditemukan.";
-  }
-
-  return `${dashboard.pendingCount} bukti pembayaran menunggu dicek untuk ${dashboard.group.name}.
-
-Buka Konfirmasi Bukti:
-${dashboardUrl(`/app/arisan/${selected.membership.arisanGroupId}/payments`)}`;
-}
-
 async function handlePackage(memberships: Membership[]) {
   const selected = selectSingleAdmin(memberships);
 
@@ -274,6 +281,188 @@ Baca bukti: ${packageStatus.proofUsed}/${packageStatus.proofLimit}
 Aktif sampai: ${formatDateTimeLabel(packageStatus.activeUntil)}
 
 ${dashboardUrl(`/app/arisan/${selected.membership.arisanGroupId}/paket`)}`;
+}
+
+function selectSingleMembership(memberships: Membership[]) {
+  if (memberships.length === 0) {
+    return {
+      error: "Kamu belum masuk ke arisan. Ketik JOIN <kode> untuk mulai.",
+      membership: null,
+    };
+  }
+
+  if (memberships.length > 1) {
+    return {
+      error: `Kamu terdaftar di beberapa arisan:
+${membershipList(memberships)}
+
+Buka dashboard untuk memilih arisan: ${dashboardUrl("/app")}`,
+      membership: null,
+    };
+  }
+
+  return { error: null, membership: memberships[0] };
+}
+
+async function handleRekening(memberships: Membership[]) {
+  const selected = selectSingleMembership(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  const dashboard = await getArisanDashboardData(selected.membership.arisanGroupId);
+
+  if (!dashboard) {
+    return "Data arisan tidak ditemukan.";
+  }
+
+  return `Rekening admin ${dashboard.group.name}
+${dashboard.group.bankAccountText ?? "Belum diisi admin."}
+Setoran: ${formatRupiah(dashboard.group.amountPerPeriod)}
+
+Setelah transfer, kirim foto bukti bayar di chat ini.`;
+}
+
+async function handleGiliran(memberships: Membership[]) {
+  const selected = selectSingleMembership(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  const giliran = await getGiliranData(selected.membership.arisanGroupId);
+
+  if (!giliran) {
+    return "Data arisan tidak ditemukan.";
+  }
+
+  const order =
+    giliran.members.length > 0
+      ? giliran.members
+          .map((member, index) => {
+            const mark = member.isCurrentDraw ? " (giliran sekarang)" : "";
+            return `${index + 1}. ${member.displayName}${mark}`;
+          })
+          .join("\n")
+      : "Belum ada anggota.";
+
+  const isAdmin = selected.membership.role === "admin";
+
+  return `Giliran ${giliran.group.name}
+Periode: ${giliran.activePeriod?.name ?? "Belum ada"}
+Giliran sekarang: ${giliran.currentDrawName ?? "Belum diatur"}
+
+Urutan:
+${order}
+${
+  isAdmin
+    ? `\nAtur urutan di dashboard: ${dashboardUrl(
+        `/app/arisan/${selected.membership.arisanGroupId}/giliran`,
+      )}`
+    : "\nGiliran diatur oleh admin."
+}`;
+}
+
+async function handleRiwayat(userId: string, memberships: Membership[]) {
+  const selected = selectSingleMembership(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  const history = await getMemberPaymentHistory(
+    selected.membership.arisanGroupId,
+    userId,
+  );
+
+  if (!history) {
+    return "Data arisan tidak ditemukan.";
+  }
+
+  if (history.payments.length === 0) {
+    return `Belum ada riwayat pembayaran di ${history.group.name}.
+Kirim foto bukti transfer untuk mulai mencatat.`;
+  }
+
+  const rows = history.payments
+    .slice(0, 10)
+    .map(
+      (payment) =>
+        `- ${payment.periodName}: ${
+          payment.amount ? formatRupiah(payment.amount) : "-"
+        } (${paymentStatusLabel(payment.status)})`,
+    )
+    .join("\n");
+
+  return `Riwayat pembayaran ${history.group.name}
+Sudah dikonfirmasi: ${history.confirmedCount}x
+Total: ${formatRupiah(history.totalPaid)}
+
+${rows}
+
+Selengkapnya: ${dashboardUrl(
+    `/app/arisan/${selected.membership.arisanGroupId}/riwayat`,
+  )}`;
+}
+
+async function handleBelumBayar(memberships: Membership[]) {
+  const selected = selectSingleAdmin(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  const dashboard = await getArisanDashboardData(selected.membership.arisanGroupId);
+
+  if (!dashboard) {
+    return "Data arisan tidak ditemukan.";
+  }
+
+  if (dashboard.unpaidMembers.length === 0) {
+    return `Semua anggota ${dashboard.group.name} sudah bayar untuk ${
+      dashboard.activePeriod?.name ?? "periode aktif"
+    }.`;
+  }
+
+  return `Belum bayar ${dashboard.group.name}
+Periode: ${dashboard.activePeriod?.name ?? "Belum ada"}
+Jumlah belum bayar: ${dashboard.unpaidMembers.length}
+
+${dashboard.unpaidMembers.map((name) => `- ${name}`).join("\n")}
+
+Ketik TAGIH untuk membuat teks pengingat.`;
+}
+
+async function handleAnggota(memberships: Membership[]) {
+  const selected = selectSingleAdmin(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  const members = await getArisanMembers(selected.membership.arisanGroupId);
+  const memberOnly = members.filter((member) => member.role === "member");
+
+  const rows =
+    memberOnly.length > 0
+      ? memberOnly
+          .map((member) => {
+            const status =
+              member.joinStatus === "claimed" ? "sudah gabung" : "belum gabung";
+            return `- ${member.displayName} (${status})`;
+          })
+          .join("\n")
+      : "Belum ada anggota.";
+
+  return `Anggota ${selected.membership.arisanName}
+Jumlah anggota: ${memberOnly.length}
+
+${rows}
+
+Tambah/kelola anggota: ${dashboardUrl(
+    `/app/arisan/${selected.membership.arisanGroupId}/members`,
+  )}`;
 }
 
 export async function handleWhatsAppCommand(input: {
@@ -294,18 +483,32 @@ export async function handleWhatsAppCommand(input: {
       }
 
       return joinHelp();
+    case "bantuan":
+      return helpText(memberships);
     case "join":
       return handleJoin(input.command);
     case "status":
       return handleStatus(input.userId, memberships);
     case "bayar":
       return handleBayar(memberships);
+    case "rekening":
+      return handleRekening(memberships);
+    case "giliran":
+      return handleGiliran(memberships);
+    case "riwayat":
+      return handleRiwayat(input.userId, memberships);
+    case "buat-arisan":
+      return beginCreateArisan(input.userId);
     case "rekap":
       return handleRecap(memberships);
+    case "belum-bayar":
+      return handleBelumBayar(memberships);
     case "tagih":
       return handleTagih(memberships);
     case "konfirmasi":
-      return handleConfirmation(memberships);
+      return beginKonfirmasi(input.userId, memberships);
+    case "anggota":
+      return handleAnggota(memberships);
     case "paket":
       return handlePackage(memberships);
     case "dashboard":

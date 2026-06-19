@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "pending_action_data" jsonb;

@@ -2,13 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { db } from "@/db";
-import { arisanGroups, memberships, periods } from "@/db/schema";
-import {
-  attachFreePlanIfAvailable,
-  buildActivePeriod,
-  generateUniqueJoinCode,
-} from "@/lib/arisan";
+import { createArisanGroup } from "@/lib/arisan";
 import { requireUser } from "@/lib/auth/user";
 
 export type CreateArisanState = {
@@ -51,44 +45,15 @@ export async function createArisanAction(
     return { error: "Rekening admin atau e-wallet admin harus diisi." };
   }
 
-  const now = new Date();
-  const dueDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), dueDay))
-    .toISOString()
-    .slice(0, 10);
-  const activePeriod = buildActivePeriod(periodType, dueDate);
-  const joinCode = await generateUniqueJoinCode();
-
-  const [group] = await db
-    .insert(arisanGroups)
-    .values({
-      adminUserId: user.id,
-      amountPerPeriod: amount,
-      bankAccountText,
-      dueDay,
-      joinCode,
-      name,
-      periodType,
-      status: "active",
-    })
-    .returning({ id: arisanGroups.id });
-
-  await db.insert(memberships).values({
-    arisanGroupId: group.id,
-    displayName: user.name ?? "Admin",
-    joinStatus: "claimed",
-    role: "admin",
-    userId: user.id,
+  const group = await createArisanGroup({
+    adminDisplayName: user.name ?? "Admin",
+    adminUserId: user.id,
+    amountPerPeriod: amount,
+    bankAccountText,
+    dueDay,
+    name,
+    periodType,
   });
-
-  await db.insert(periods).values({
-    arisanGroupId: group.id,
-    dueDate: activePeriod.dueDate,
-    name: activePeriod.name,
-    startDate: activePeriod.startDate,
-    status: "active",
-  });
-
-  await attachFreePlanIfAvailable(group.id, user.id);
 
   redirect(`/app/arisan/${group.id}`);
 }

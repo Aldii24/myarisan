@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   ButtonLink,
   EmptyState,
@@ -138,6 +140,25 @@ export default async function PaymentDetailPage({
         subtitle={`${payment.periodName} - ${formatDateTimeLabel(payment.createdAt)}`}
         title={payment.memberName ?? "Anggota"}
       />
+      {payment.status === "duplicate_check" ? (
+        <div className="rounded-3xl border border-orange-200/80 bg-orange-50/90 p-4 shadow-sm">
+          <p className="text-sm font-semibold text-orange-950">
+            Bukti ini mirip dengan pembayaran yang sudah pernah dikirim.
+          </p>
+          <p className="mt-1 text-sm leading-6 text-orange-900">
+            Status: perlu dicek admin. Pastikan ini bukan bukti ganda sebelum
+            menerima.
+          </p>
+          {payment.duplicateOfPaymentId ? (
+            <Link
+              className="mt-2 inline-flex text-sm font-semibold text-orange-950 underline underline-offset-2"
+              href={`/app/arisan/${arisanId}/payments/${payment.duplicateOfPaymentId}`}
+            >
+              Lihat bukti yang mirip
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           accent={payment.status === "confirmed" ? "emerald" : payment.status === "rejected" ? "red" : "amber"}

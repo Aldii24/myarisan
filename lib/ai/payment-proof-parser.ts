@@ -5,6 +5,7 @@ export type ParsedPaymentProof = {
   detectedDate: string | null;
   detectedSenderName: string | null;
   detectedBankOrWallet: string | null;
+  detectedReferenceNo: string | null;
   matchedMemberName: string | null;
   matchedPeriod: string | null;
   confidence: number;
@@ -28,6 +29,7 @@ const fallbackResult: ParsedPaymentProof = {
   detectedAmount: null,
   detectedBankOrWallet: null,
   detectedDate: null,
+  detectedReferenceNo: null,
   detectedSenderName: null,
   matchedMemberName: null,
   matchedPeriod: null,
@@ -125,6 +127,7 @@ function normalizeParsedResult(
     detectedAmount: numberOrNull(record.detectedAmount),
     detectedBankOrWallet: stringOrNull(record.detectedBankOrWallet),
     detectedDate: stringOrNull(record.detectedDate),
+    detectedReferenceNo: stringOrNull(record.detectedReferenceNo),
     detectedSenderName: stringOrNull(record.detectedSenderName),
     matchedMemberName: stringOrNull(record.matchedMemberName),
     matchedPeriod: stringOrNull(record.matchedPeriod),
@@ -148,8 +151,9 @@ OCR text:
 ${params.ocrText || "(empty)"}
 
 Return exactly:
-{"detectedAmount":number|null,"detectedDate":string|null,"detectedSenderName":string|null,"detectedBankOrWallet":string|null,"matchedMemberName":string|null,"matchedPeriod":string|null,"confidence":number,"warnings":string[],"notes":string}
+{"detectedAmount":number|null,"detectedDate":string|null,"detectedSenderName":string|null,"detectedBankOrWallet":string|null,"detectedReferenceNo":string|null,"matchedMemberName":string|null,"matchedPeriod":string|null,"confidence":number,"warnings":string[],"notes":string}
 
+detectedReferenceNo is the bank/e-wallet transaction or reference number if printed on the proof (also called "No. Ref", "ID Transaksi", "No. Referensi"); use null if not readable.
 Warnings must include when relevant: nominal does not match, sender name does not match, date unclear, OCR text too empty, possible duplicate or unclear proof.`;
 }
 

@@ -3,8 +3,11 @@ import "server-only";
 import { parseWhatsAppCommand, type WhatsAppCommand } from "./command-parser";
 import { getPendingAction } from "./conversation-state";
 import { handleWhatsAppCommand } from "./handle-command";
+import { handleAnggotaInput } from "./handle-anggota";
 import { handleCreateArisanInput } from "./handle-create-arisan";
+import { handleGiliranInput } from "./handle-giliran";
 import { handleKonfirmasiInput } from "./handle-konfirmasi";
+import { handlePeriodeInput } from "./handle-periode";
 import { handleResetPinInput } from "./handle-reset-pin";
 import {
   recordInboundWhatsAppMessage,
@@ -61,6 +64,12 @@ export async function processInboundWhatsAppText(input: {
         input.text,
         pendingAction,
       );
+    } else if (pendingAction?.action === "manage_period") {
+      reply = await handlePeriodeInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "manage_giliran") {
+      reply = await handleGiliranInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "manage_members") {
+      reply = await handleAnggotaInput(inbound.userId, input.text, pendingAction);
     } else {
       command = parseWhatsAppCommand(input.text);
       reply = await handleWhatsAppCommand({

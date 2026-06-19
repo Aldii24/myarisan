@@ -10,7 +10,6 @@ import {
   formatDateTimeLabel,
   formatRupiah,
   getArisanDashboardData,
-  getArisanMembers,
   getMemberDashboardData,
   getMemberPaymentHistory,
   paymentStatusLabel,
@@ -21,8 +20,11 @@ import { getPackageStatus } from "@/lib/subscription";
 
 import type { WhatsAppCommand } from "./command-parser";
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+import { beginManageAnggota } from "./handle-anggota";
 import { beginCreateArisan } from "./handle-create-arisan";
+import { beginManageGiliran } from "./handle-giliran";
 import { beginKonfirmasi } from "./handle-konfirmasi";
+import { beginPeriode } from "./handle-periode";
 import { beginResetPin } from "./handle-reset-pin";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
@@ -64,6 +66,7 @@ function adminMenu() {
 - konfirmasi
 - anggota
 - giliran
+- periode
 - paket
 - dashboard
 - bantuan
@@ -324,11 +327,15 @@ Setoran: ${formatRupiah(dashboard.group.amountPerPeriod)}
 Setelah transfer, kirim foto bukti bayar di chat ini.`;
 }
 
-async function handleGiliran(memberships: Membership[]) {
+async function handleGiliran(userId: string, memberships: Membership[]) {
   const selected = selectSingleMembership(memberships);
 
   if (!selected.membership) {
     return selected.error!;
+  }
+
+  if (selected.membership.role === "admin") {
+    return beginManageGiliran(userId, selected.membership.arisanGroupId);
   }
 
   const giliran = await getGiliranData(selected.membership.arisanGroupId);
@@ -347,21 +354,14 @@ async function handleGiliran(memberships: Membership[]) {
           .join("\n")
       : "Belum ada anggota.";
 
-  const isAdmin = selected.membership.role === "admin";
-
   return `Giliran ${giliran.group.name}
 Periode: ${giliran.activePeriod?.name ?? "Belum ada"}
 Giliran sekarang: ${giliran.currentDrawName ?? "Belum diatur"}
 
 Urutan:
 ${order}
-${
-  isAdmin
-    ? `\nAtur urutan di dashboard: ${dashboardUrl(
-        `/app/arisan/${selected.membership.arisanGroupId}/giliran`,
-      )}`
-    : "\nGiliran diatur oleh admin."
-}`;
+
+Giliran diatur oleh admin.`;
 }
 
 async function handleRiwayat(userId: string, memberships: Membership[]) {
@@ -434,35 +434,14 @@ ${dashboard.unpaidMembers.map((name) => `- ${name}`).join("\n")}
 Ketik TAGIH untuk membuat teks pengingat.`;
 }
 
-async function handleAnggota(memberships: Membership[]) {
+async function handleAnggota(userId: string, memberships: Membership[]) {
   const selected = selectSingleAdmin(memberships);
 
   if (!selected.membership) {
     return selected.error!;
   }
 
-  const members = await getArisanMembers(selected.membership.arisanGroupId);
-  const memberOnly = members.filter((member) => member.role === "member");
-
-  const rows =
-    memberOnly.length > 0
-      ? memberOnly
-          .map((member) => {
-            const status =
-              member.joinStatus === "claimed" ? "sudah gabung" : "belum gabung";
-            return `- ${member.displayName} (${status})`;
-          })
-          .join("\n")
-      : "Belum ada anggota.";
-
-  return `Anggota ${selected.membership.arisanName}
-Jumlah anggota: ${memberOnly.length}
-
-${rows}
-
-Tambah/kelola anggota: ${dashboardUrl(
-    `/app/arisan/${selected.membership.arisanGroupId}/members`,
-  )}`;
+  return beginManageAnggota(userId, selected.membership.arisanGroupId);
 }
 
 export async function handleWhatsAppCommand(input: {
@@ -494,7 +473,7 @@ export async function handleWhatsAppCommand(input: {
     case "rekening":
       return handleRekening(memberships);
     case "giliran":
-      return handleGiliran(memberships);
+      return handleGiliran(input.userId, memberships);
     case "riwayat":
       return handleRiwayat(input.userId, memberships);
     case "buat-arisan":
@@ -508,7 +487,9 @@ export async function handleWhatsAppCommand(input: {
     case "konfirmasi":
       return beginKonfirmasi(input.userId, memberships);
     case "anggota":
-      return handleAnggota(memberships);
+      return handleAnggota(input.userId, memberships);
+    case "periode":
+      return beginPeriode(input.userId, memberships);
     case "paket":
       return handlePackage(memberships);
     case "dashboard":

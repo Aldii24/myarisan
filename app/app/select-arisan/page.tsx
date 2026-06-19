@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import {
@@ -6,12 +5,12 @@ import {
   ButtonLink,
   GlassPanel,
   PageShell,
-  StatusBadge,
   buttonStyles,
 } from "@/components/ui/app-ui";
 import { getUserMemberships, requireUser } from "@/lib/auth/user";
 
 import { logoutAction } from "../actions";
+import { ArisanList } from "./arisan-list";
 
 export default async function SelectArisanPage() {
   const user = await requireUser();
@@ -21,9 +20,12 @@ export default async function SelectArisanPage() {
     redirect("/app");
   }
 
-  if (memberships.length === 1) {
-    redirect(`/app/arisan/${memberships[0].arisanGroupId}`);
-  }
+  const items = memberships.map((membership) => ({
+    arisanGroupId: membership.arisanGroupId,
+    arisanName: membership.arisanName,
+    id: membership.id,
+    role: membership.role,
+  }));
 
   return (
     <PageShell>
@@ -53,30 +55,7 @@ export default async function SelectArisanPage() {
           </div>
         </GlassPanel>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {memberships.map((membership) => (
-            <Link
-              className="group rounded-[1.5rem] border border-white/55 bg-white/50 p-5 shadow-[0_18px_60px_rgba(67,48,35,0.1)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white/68"
-              href={`/app/arisan/${membership.arisanGroupId}`}
-              key={membership.id}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-zinc-950">
-                    {membership.arisanName}
-                  </p>
-                  <p className="mt-2 text-sm text-zinc-600">
-                    Lihat ringkasan, anggota, dan pembayaran.
-                  </p>
-                </div>
-                <StatusBadge status={membership.role === "admin" ? "Admin" : "Anggota"} />
-              </div>
-              <p className="mt-6 text-sm font-semibold text-emerald-700 transition group-hover:translate-x-1">
-                Buka arisan
-              </p>
-            </Link>
-          ))}
-        </div>
+        <ArisanList items={items} />
       </div>
     </PageShell>
   );

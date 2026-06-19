@@ -3,12 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import {
-  arisanGroups,
-  dashboardNotifications,
-  memberships,
-  users,
-} from "@/db/schema";
+import { arisanGroups, memberships, users } from "@/db/schema";
 import { formatRupiah } from "@/lib/arisan";
 import { createPaymentProofFromUpload } from "@/lib/payments/create-payment-proof";
 
@@ -21,6 +16,8 @@ function getAppUrl() {
   return getWhatsAppConfig().appUrl;
 }
 
+// The shared dashboard notification is created in createPaymentProofFromUpload.
+// Here we only add the in-window WhatsApp message to the admin on top of it.
 async function notifyAdmin(input: {
   adminUserId: string;
   arisanId: string;
@@ -32,19 +29,6 @@ async function notifyAdmin(input: {
   const duplicateHint = input.isDuplicate
     ? " Bukti ini mirip dengan pembayaran yang sudah pernah dikirim."
     : "";
-  const dashboardMessage = `${input.memberDisplayName} mengirim bukti pembayaran melalui WhatsApp. Status: Menunggu Dicek.${duplicateHint}`;
-
-  try {
-    await db.insert(dashboardNotifications).values({
-      arisanGroupId: input.arisanId,
-      message: dashboardMessage,
-      title: `Bukti baru · ${input.arisanName}`,
-      type: "payment_proof",
-      userId: input.adminUserId,
-    });
-  } catch (error) {
-    console.error("Failed to create admin payment notification", error);
-  }
 
   const [admin] = await db
     .select({
@@ -122,14 +106,16 @@ export async function handleWhatsAppProofImage(input: {
     };
   }
 
-  await notifyAdmin({
-    adminUserId: result.adminUserId,
-    arisanId: membership.arisanId,
-    arisanName: result.arisanName,
-    isDuplicate: result.isDuplicate,
-    memberDisplayName: result.memberDisplayName,
-    paymentId: result.paymentId,
-  });
+  if (result.notifyAdmin) {
+    await notifyAdmin({
+      adminUserId: result.adminUserId,
+      arisanId: membership.arisanId,
+      arisanName: result.arisanName,
+      isDuplicate: result.isDuplicate,
+      memberDisplayName: result.memberDisplayName,
+      paymentId: result.paymentId,
+    });
+  }
 
   const replyParts = result.isDuplicate
     ? [

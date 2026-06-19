@@ -1,62 +1,19 @@
 "use server";
 
-import { randomInt } from "node:crypto";
-import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/db";
-import { memberships, periods } from "@/db/schema";
-import { createAuditLog } from "@/lib/audit";
 import { requireArisanAdmin } from "@/lib/auth/user";
+import {
+  randomizeGiliranOrder,
+  reorderGiliranMember,
+  setGiliranDrawMember,
+} from "@/lib/giliran";
+import { startNextPeriod } from "@/lib/periods";
 
 export type GiliranActionState = {
   error?: string;
   success?: string;
 };
-
-async function getOrderedMemberIds(arisanId: string) {
-  const rows = await db
-    .select({
-      id: memberships.id,
-      displayName: memberships.displayName,
-      turnOrder: memberships.turnOrder,
-    })
-    .from(memberships)
-    .where(
-      and(
-        eq(memberships.arisanGroupId, arisanId),
-        eq(memberships.role, "member"),
-        ne(memberships.joinStatus, "removed"),
-      ),
-    );
-
-  return rows
-    .sort((a, b) => {
-      if (a.turnOrder !== null && b.turnOrder !== null) {
-        return a.turnOrder - b.turnOrder;
-      }
-
-      if (a.turnOrder !== null) {
-        return -1;
-      }
-
-      if (b.turnOrder !== null) {
-        return 1;
-      }
-
-      return a.displayName.localeCompare(b.displayName, "id-ID");
-    })
-    .map((row) => row.id);
-}
-
-async function persistOrder(orderedIds: string[]) {
-  for (let index = 0; index < orderedIds.length; index += 1) {
-    await db
-      .update(memberships)
-      .set({ turnOrder: index + 1 })
-      .where(eq(memberships.id, orderedIds[index]));
-  }
-}
 
 function revalidateGiliran(arisanId: string) {
   revalidatePath(`/app/arisan/${arisanId}`);
@@ -74,34 +31,16 @@ export async function moveMemberOrderAction(
     return { error: "Hanya admin yang bisa mengatur giliran." };
   }
 
-  const orderedIds = await getOrderedMemberIds(arisanId);
-  const index = orderedIds.indexOf(membershipId);
-
-  if (index === -1) {
-    return { error: "Anggota tidak ditemukan." };
-  }
-
-  const swapWith = direction === "up" ? index - 1 : index + 1;
-
-  if (swapWith < 0 || swapWith >= orderedIds.length) {
-    return { error: "Urutan sudah di posisi paling ujung." };
-  }
-
-  [orderedIds[index], orderedIds[swapWith]] = [
-    orderedIds[swapWith],
-    orderedIds[index],
-  ];
-
-  await persistOrder(orderedIds);
-
-  await createAuditLog({
-    action: "giliran.reorder",
+  const result = await reorderGiliranMember({
     actorUserId: context.user.id,
-    afterJson: { direction, membershipId, order: orderedIds },
-    arisanGroupId: arisanId,
-    entityId: membershipId,
-    entityType: "membership",
+    arisanId,
+    direction,
+    membershipId,
   });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
 
   revalidateGiliran(arisanId);
 
@@ -117,31 +56,53 @@ export async function randomizeOrderAction(
     return { error: "Hanya admin yang bisa mengatur giliran." };
   }
 
-  const orderedIds = await getOrderedMemberIds(arisanId);
-
-  if (orderedIds.length < 2) {
-    return { error: "Minimal 2 anggota untuk mengacak giliran." };
-  }
-
-  for (let index = orderedIds.length - 1; index > 0; index -= 1) {
-    const swap = randomInt(0, index + 1);
-    [orderedIds[index], orderedIds[swap]] = [orderedIds[swap], orderedIds[index]];
-  }
-
-  await persistOrder(orderedIds);
-
-  await createAuditLog({
-    action: "giliran.randomize",
+  const result = await randomizeGiliranOrder({
     actorUserId: context.user.id,
-    afterJson: { order: orderedIds },
-    arisanGroupId: arisanId,
-    entityId: arisanId,
-    entityType: "period",
+    arisanId,
   });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
 
   revalidateGiliran(arisanId);
 
   return { success: "Giliran berhasil diacak." };
+}
+
+export async function startNextPeriodAction(
+  arisanId: string,
+): Promise<GiliranActionState> {
+  const context = await requireArisanAdmin(arisanId);
+
+  if (!context) {
+    return { error: "Hanya admin yang bisa mengatur periode." };
+  }
+
+  const result = await startNextPeriod({
+    actorUserId: context.user.id,
+    arisanId,
+  });
+
+  if (!result.ok) {
+    if (result.reason === "expired") {
+      return {
+        error:
+          "Paket arisan sudah berakhir. Perpanjang paket untuk membuka periode baru.",
+      };
+    }
+
+    return { error: "Arisan tidak ditemukan." };
+  }
+
+  revalidateGiliran(arisanId);
+  revalidatePath(`/app/arisan/${arisanId}/payments`);
+
+  return {
+    success: result.closedPeriodName
+      ? `Periode ${result.closedPeriodName} ditutup. Periode baru ${result.newPeriodName} dimulai.`
+      : `Periode baru ${result.newPeriodName} dimulai.`,
+  };
 }
 
 export async function setDrawMemberAction(
@@ -157,55 +118,21 @@ export async function setDrawMemberAction(
 
   const membershipId = String(formData.get("membershipId") ?? "").trim();
 
-  const [activePeriod] = await db
-    .select({ id: periods.id, drawMemberId: periods.drawMemberId })
-    .from(periods)
-    .where(and(eq(periods.arisanGroupId, arisanId), eq(periods.status, "active")))
-    .limit(1);
-
-  if (!activePeriod) {
-    return { error: "Belum ada periode aktif untuk diatur gilirannya." };
-  }
-
-  const drawMemberId = membershipId || null;
-
-  if (drawMemberId) {
-    const [member] = await db
-      .select({ id: memberships.id })
-      .from(memberships)
-      .where(
-        and(
-          eq(memberships.id, drawMemberId),
-          eq(memberships.arisanGroupId, arisanId),
-          eq(memberships.role, "member"),
-          ne(memberships.joinStatus, "removed"),
-        ),
-      )
-      .limit(1);
-
-    if (!member) {
-      return { error: "Anggota tidak ditemukan di arisan ini." };
-    }
-  }
-
-  await db
-    .update(periods)
-    .set({ drawMemberId })
-    .where(eq(periods.id, activePeriod.id));
-
-  await createAuditLog({
-    action: "giliran.set_draw_member",
+  const result = await setGiliranDrawMember({
     actorUserId: context.user.id,
-    afterJson: { drawMemberId, periodId: activePeriod.id },
-    arisanGroupId: arisanId,
-    beforeJson: { drawMemberId: activePeriod.drawMemberId },
-    entityId: activePeriod.id,
-    entityType: "period",
+    arisanId,
+    membershipId: membershipId || null,
   });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
 
   revalidateGiliran(arisanId);
 
   return {
-    success: drawMemberId ? "Giliran bulan ini diperbarui." : "Giliran dikosongkan.",
+    success: result.cleared
+      ? "Giliran dikosongkan."
+      : "Giliran bulan ini diperbarui.",
   };
 }

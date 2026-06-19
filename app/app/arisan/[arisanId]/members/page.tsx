@@ -10,14 +10,7 @@ import { requireArisanAdmin } from "@/lib/auth/user";
 import { getPlanLimits } from "@/lib/subscription";
 
 import { AddMembersForm } from "./add-members-form";
-
-function joinStatusLabel(status: string) {
-  if (status === "claimed") {
-    return "sudah daftar";
-  }
-
-  return "belum daftar";
-}
+import { MembersList } from "./members-list";
 
 export default async function MembersPage({
   params,
@@ -82,30 +75,14 @@ export default async function MembersPage({
             <StatusBadge status={planLimits.planName} />
           </div>
 
-          {memberRows.length === 0 ? (
-            <EmptyState title="Belum ada anggota">
-              Belum ada anggota. Tambahkan nama anggota dulu.
-            </EmptyState>
-          ) : (
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {memberRows.map((member) => (
-                <div
-                  className="rounded-3xl border border-white/55 bg-white/45 p-4 shadow-sm"
-                  key={member.id}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-zinc-950">{member.displayName}</p>
-                      <p className="mt-1 text-sm text-zinc-600">
-                        {member.role === "admin" ? "Admin" : "Anggota"}
-                      </p>
-                    </div>
-                    <StatusBadge status={joinStatusLabel(member.joinStatus)} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <MembersList
+            arisanId={arisanId}
+            members={memberRows.map((member) => ({
+              displayName: member.displayName,
+              id: member.id,
+              joinStatus: member.joinStatus,
+            }))}
+          />
         </GlassPanel>
       </div>
     </>

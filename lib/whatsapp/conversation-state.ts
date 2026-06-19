@@ -5,7 +5,13 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 
-export type PendingAction = "reset_pin" | "create_arisan" | "confirm_payment";
+export type PendingAction =
+  | "reset_pin"
+  | "create_arisan"
+  | "confirm_payment"
+  | "manage_period"
+  | "manage_giliran"
+  | "manage_members";
 
 export type PendingActionState = {
   action: PendingAction;

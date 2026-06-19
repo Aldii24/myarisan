@@ -5,9 +5,11 @@ import { EmptyState, GlassPanel, StatusBadge } from "@/components/ui/app-ui";
 import { formatDateLabel } from "@/lib/arisan";
 import { requireArisanMembership } from "@/lib/auth/user";
 import { getGiliranData, getGiliranWinnerHistory } from "@/lib/giliran";
+import { getPeriodOverview } from "@/lib/periods";
 import { cn } from "@/lib/utils";
 
 import { GiliranAdmin } from "./giliran-admin";
+import { PeriodControl } from "./period-control";
 
 function periodStatusLabel(status: string) {
   if (status === "active") {
@@ -28,10 +30,12 @@ export default async function GiliranPage({
 }) {
   const { arisanId } = await params;
   const { membership } = await requireArisanMembership(arisanId);
+  const isAdmin = membership.role === "admin";
 
-  const [data, winners] = await Promise.all([
+  const [data, winners, periodOverview] = await Promise.all([
     getGiliranData(arisanId),
     getGiliranWinnerHistory(arisanId),
+    isAdmin ? getPeriodOverview(arisanId) : Promise.resolve(null),
   ]);
 
   if (!data) {
@@ -44,8 +48,6 @@ export default async function GiliranPage({
       </>
     );
   }
-
-  const isAdmin = membership.role === "admin";
 
   return (
     <>
@@ -72,6 +74,25 @@ export default async function GiliranPage({
           </div>
         </div>
       </GlassPanel>
+
+      {isAdmin && periodOverview ? (
+        <GlassPanel className="p-5">
+          <h2 className="text-xl font-semibold text-zinc-950">Kelola periode</h2>
+          <p className="mt-1 text-sm text-zinc-600">
+            Tutup periode berjalan dan mulai periode berikutnya saat semua sudah
+            beres. Pemenang periode ini tetap tersimpan di riwayat.
+          </p>
+          <div className="mt-4">
+            <PeriodControl
+              activePeriodName={periodOverview.activePeriod?.name ?? null}
+              arisanId={arisanId}
+              hasDrawWinner={periodOverview.hasDrawWinner}
+              paidCount={periodOverview.paidCount}
+              unpaidCount={periodOverview.unpaidCount}
+            />
+          </div>
+        </GlassPanel>
+      ) : null}
 
       <GlassPanel className="p-5">
         <h2 className="text-xl font-semibold text-zinc-950">Urutan giliran</h2>

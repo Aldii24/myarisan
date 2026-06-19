@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   CalendarClock,
   LayoutDashboard,
   Package as PackageIcon,
@@ -75,14 +76,46 @@ function desktopItems(arisanId: string, role: "admin" | "member") {
   ];
 }
 
+function NotificationBell({
+  className,
+  unreadCount = 0,
+}: {
+  className?: string;
+  unreadCount?: number;
+}) {
+  return (
+    <Link
+      aria-label={
+        unreadCount > 0
+          ? `Notifikasi, ${unreadCount} belum dibaca`
+          : "Notifikasi"
+      }
+      className={cn(
+        "relative inline-flex items-center justify-center rounded-lg border bg-white text-zinc-700 transition-colors hover:bg-zinc-50",
+        className,
+      )}
+      href="/app/notifications"
+    >
+      <Bell className="size-4" />
+      {unreadCount > 0 ? (
+        <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[0.6rem] font-semibold leading-4 text-white">
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </span>
+      ) : null}
+    </Link>
+  );
+}
+
 export function DashboardShell({
   arisanId,
   children,
   role,
+  unreadCount = 0,
 }: {
   arisanId: string;
   children: React.ReactNode;
   role: "admin" | "member";
+  unreadCount?: number;
 }) {
   const pathname = usePathname();
   const activeItem = pathname.includes("/payments")
@@ -132,12 +165,15 @@ export function DashboardShell({
               })}
             </nav>
             <Separator />
-            <Link
-              className="m-3 flex h-10 items-center justify-center rounded-lg border bg-white px-3 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
-              href="/app/select-arisan"
-            >
-              Ganti Arisan
-            </Link>
+            <div className="m-3 flex items-center gap-2">
+              <Link
+                className="flex h-10 flex-1 items-center justify-center rounded-lg border bg-white px-3 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                href="/app/select-arisan"
+              >
+                Ganti Arisan
+              </Link>
+              <NotificationBell className="size-10 shrink-0" unreadCount={unreadCount} />
+            </div>
           </Card>
         </aside>
 
@@ -151,6 +187,15 @@ export function DashboardShell({
                   {role === "admin" ? "Admin Arisan" : "Anggota Arisan"}
                 </p>
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                className="flex h-9 items-center rounded-lg border bg-white px-3 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                href="/app/select-arisan"
+              >
+                Ganti Arisan
+              </Link>
+              <NotificationBell className="size-9 shrink-0" unreadCount={unreadCount} />
             </div>
           </header>
           {children}

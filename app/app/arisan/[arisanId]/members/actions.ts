@@ -1,36 +1,28 @@
 "use server";
 
-import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/db";
-import { memberships } from "@/db/schema";
 import { requireArisanAdmin } from "@/lib/auth/user";
-import { canAddMember } from "@/lib/subscription";
+import {
+  addMembersByNames,
+  parseMemberNames,
+  removeMember,
+  renameMember,
+} from "@/lib/members";
 
 export type AddMembersState = {
   error?: string;
   success?: string;
 };
 
-function parseMemberNames(value: FormDataEntryValue | null) {
-  const seen = new Set<string>();
-  const names: string[] = [];
+export type MemberRowState = {
+  error?: string;
+  success?: string;
+};
 
-  String(value ?? "")
-    .split(/\r?\n/)
-    .map((name) => name.trim())
-    .filter(Boolean)
-    .forEach((name) => {
-      const key = name.toLocaleLowerCase("id-ID");
-
-      if (!seen.has(key)) {
-        seen.add(key);
-        names.push(name);
-      }
-    });
-
-  return names;
+function revalidateMembers(arisanId: string) {
+  revalidatePath(`/app/arisan/${arisanId}`);
+  revalidatePath(`/app/arisan/${arisanId}/members`);
 }
 
 export async function addMembersAction(
@@ -44,56 +36,71 @@ export async function addMembersAction(
     return { error: "Hanya admin yang bisa menambah anggota." };
   }
 
-  const names = parseMemberNames(formData.get("memberNames"));
+  const names = parseMemberNames(String(formData.get("memberNames") ?? ""));
 
-  if (names.length === 0) {
-    return { error: "Tulis minimal 1 nama anggota." };
+  const result = await addMembersByNames({
+    actorUserId: context.user.id,
+    arisanId,
+    names,
+  });
+
+  if (!result.ok) {
+    return { error: result.error };
   }
 
-  const existingMemberships = await db
-    .select({
-      displayName: memberships.displayName,
-      role: memberships.role,
-    })
-    .from(memberships)
-    .where(
-      and(eq(memberships.arisanGroupId, arisanId), ne(memberships.joinStatus, "removed")),
-    );
+  revalidateMembers(arisanId);
 
-  const existingNames = new Set(
-    existingMemberships.map((member) => member.displayName.toLocaleLowerCase("id-ID")),
-  );
-  const duplicateNames = names.filter((name) =>
-    existingNames.has(name.toLocaleLowerCase("id-ID")),
-  );
+  return { success: `${result.addedCount} anggota ditambahkan.` };
+}
 
-  if (duplicateNames.length > 0) {
-    return {
-      error: `Nama sudah ada: ${duplicateNames.join(", ")}.`,
-    };
+export async function renameMemberAction(
+  arisanId: string,
+  _state: MemberRowState,
+  formData: FormData,
+): Promise<MemberRowState> {
+  const context = await requireArisanAdmin(arisanId);
+
+  if (!context) {
+    return { error: "Hanya admin yang bisa mengubah anggota." };
   }
 
-  const memberGate = await canAddMember(arisanId, names.length);
+  const result = await renameMember({
+    actorUserId: context.user.id,
+    arisanId,
+    membershipId: String(formData.get("membershipId") ?? ""),
+    newName: String(formData.get("newName") ?? ""),
+  });
 
-  if (!memberGate.allowed) {
-    return {
-      error: `Paket ${memberGate.planName} maksimal ${memberGate.limit} anggota. Kamu sudah punya ${memberGate.currentMemberCount} anggota.`,
-    };
+  if (!result.ok) {
+    return { error: result.error };
   }
 
-  await db.insert(memberships).values(
-    names.map((name) => ({
-      arisanGroupId: arisanId,
-      displayName: name,
-      joinStatus: "invited" as const,
-      role: "member" as const,
-    })),
-  );
+  revalidateMembers(arisanId);
 
-  revalidatePath(`/app/arisan/${arisanId}`);
-  revalidatePath(`/app/arisan/${arisanId}/members`);
+  return { success: "Nama anggota diperbarui." };
+}
 
-  return {
-    success: `${names.length} anggota ditambahkan.`,
-  };
+export async function removeMemberAction(
+  arisanId: string,
+  membershipId: string,
+): Promise<MemberRowState> {
+  const context = await requireArisanAdmin(arisanId);
+
+  if (!context) {
+    return { error: "Hanya admin yang bisa menghapus anggota." };
+  }
+
+  const result = await removeMember({
+    actorUserId: context.user.id,
+    arisanId,
+    membershipId,
+  });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
+
+  revalidateMembers(arisanId);
+
+  return { success: "Anggota dihapus." };
 }

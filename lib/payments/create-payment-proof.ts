@@ -4,7 +4,13 @@ import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/db";
-import { arisanGroups, memberships, payments, periods } from "@/db/schema";
+import {
+  arisanGroups,
+  dashboardNotifications,
+  memberships,
+  payments,
+  periods,
+} from "@/db/schema";
 import {
   parsePaymentProofWithAI,
   type ParsedPaymentProof,
@@ -28,6 +34,34 @@ const duplicateReasonLabels: Record<DuplicateReason, string> = {
     "Nominal dan nama pengirim sama dengan bukti anggota lain di periode ini.",
 };
 
+// Notify the arisan admin in their dashboard whenever a member submits a proof,
+// regardless of source (web upload or WhatsApp). The WhatsApp handler still adds
+// its own in-window WhatsApp message on top of this; this insert is the
+// dashboard fallback every path shares (PRD §10.3 / §12.4).
+async function notifyAdminOfProof(input: {
+  adminUserId: string;
+  arisanId: string;
+  arisanName: string;
+  isDuplicate: boolean;
+  memberDisplayName: string;
+}) {
+  const duplicateHint = input.isDuplicate
+    ? " Bukti ini mirip dengan pembayaran yang sudah pernah dikirim."
+    : "";
+
+  try {
+    await db.insert(dashboardNotifications).values({
+      arisanGroupId: input.arisanId,
+      message: `${input.memberDisplayName} mengirim bukti pembayaran. Status: Menunggu Dicek.${duplicateHint}`,
+      title: `Bukti baru · ${input.arisanName}`,
+      type: "payment_proof",
+      userId: input.adminUserId,
+    });
+  } catch (error) {
+    console.error("Failed to create admin payment notification", error);
+  }
+}
+
 export type CreatePaymentProofResult =
   | {
       adminUserId: string;
@@ -37,6 +71,7 @@ export type CreatePaymentProofResult =
       duplicateOfPaymentId: string | null;
       isDuplicate: boolean;
       memberDisplayName: string;
+      notifyAdmin: boolean;
       ok: true;
       paymentId: string;
       status: "duplicate_check" | "pending";
@@ -333,6 +368,24 @@ export async function createPaymentProofFromUpload(input: {
 
   await incrementProofUsage(input.arisanId);
 
+  // Notify the admin for a new submission or a resubmission after a rejection,
+  // but stay quiet when the member re-uploads a proof that is still awaiting
+  // review (pending / duplicate_check) — that proof already produced an unread
+  // notification, so re-pinging both channels would just be noise.
+  const shouldNotifyAdmin =
+    existingPayment?.status !== "pending" &&
+    existingPayment?.status !== "duplicate_check";
+
+  if (shouldNotifyAdmin) {
+    await notifyAdminOfProof({
+      adminUserId: group.adminUserId,
+      arisanId: input.arisanId,
+      arisanName: group.name,
+      isDuplicate,
+      memberDisplayName: membership.displayName,
+    });
+  }
+
   revalidatePath(`/app/arisan/${input.arisanId}`);
   revalidatePath(`/app/arisan/${input.arisanId}/bayar`);
   revalidatePath(`/app/arisan/${input.arisanId}/payments`);
@@ -345,6 +398,7 @@ export async function createPaymentProofFromUpload(input: {
     duplicateOfPaymentId,
     isDuplicate,
     memberDisplayName: membership.displayName,
+    notifyAdmin: shouldNotifyAdmin,
     ok: true,
     paymentId,
     status: isDuplicate ? "duplicate_check" : "pending",

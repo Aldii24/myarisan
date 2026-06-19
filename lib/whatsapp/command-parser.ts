@@ -10,6 +10,7 @@ export type WhatsAppCommand =
   | { name: "konfirmasi" }
   | { name: "menu" }
   | { name: "paket" }
+  | { name: "periode" }
   | { name: "rekap" }
   | { name: "rekening" }
   | { name: "reset-pin" }
@@ -30,6 +31,9 @@ const exactCommands: Record<string, WhatsAppCommand> = {
   konfirmasi: { name: "konfirmasi" },
   menu: { name: "menu" },
   paket: { name: "paket" },
+  periode: { name: "periode" },
+  "periode baru": { name: "periode" },
+  "mulai periode": { name: "periode" },
   rekap: { name: "rekap" },
   rekening: { name: "rekening" },
   "reset pin": { name: "reset-pin" },

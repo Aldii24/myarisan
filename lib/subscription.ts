@@ -182,6 +182,19 @@ export async function isSubscriptionActive(arisanId: string) {
   return Boolean(await getActiveSubscription(arisanId));
 }
 
+// True when the group is on a paid plan whose active period has lapsed (PRD
+// §8.3 "expired"). A group that never paid (Free) is not "expired" — it simply
+// runs under Free limits. Used to lock new payment confirmations.
+export async function isSubscriptionExpired(arisanId: string) {
+  const subscription = await getSubscriptionWithPlan(arisanId);
+
+  return Boolean(
+    subscription &&
+      isPaidPlan(subscription.planId) &&
+      !isActivePaidSubscription(subscription),
+  );
+}
+
 export async function getMemberUsage(arisanId: string) {
   const [row] = await db
     .select({ value: count() })
@@ -296,6 +309,33 @@ export async function canUseAutomaticProof(arisanId: string) {
     limit: limits.proofLimit,
     reason: null,
     used,
+  };
+}
+
+// Export gating per PRD §4.2 / §8.3. PDF is a paid-plan perk; Excel is a
+// Pro/Premium perk. Uses the effective plan, so an expired paid plan falls back
+// to Free (getCurrentPlan) and loses both — satisfying "Export Pro/Premium"
+// locked-when-expired.
+const excelPlanIds = new Set(["pro", "premium"]);
+
+export type ExportCapabilities = {
+  planId: string;
+  planName: string;
+  pdf: boolean;
+  excel: boolean;
+};
+
+export async function getExportCapabilities(
+  arisanId: string,
+): Promise<ExportCapabilities> {
+  const plan = await getCurrentPlan(arisanId);
+  const isPaid = isPaidPlan(plan.id);
+
+  return {
+    planId: plan.id,
+    planName: plan.name,
+    pdf: isPaid,
+    excel: isPaid && excelPlanIds.has(plan.id),
   };
 }
 

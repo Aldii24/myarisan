@@ -9,6 +9,7 @@ import {
   parsePaymentProofWithAI,
   type ParsedPaymentProof,
 } from "@/lib/ai/payment-proof-parser";
+import { isPaidStatus } from "@/lib/arisan";
 import { extractTextFromImage } from "@/lib/ocr";
 import {
   findDuplicatePayment,
@@ -164,7 +165,7 @@ export async function createPaymentProofFromUpload(input: {
     .orderBy(desc(payments.createdAt))
     .limit(1);
 
-  if (existingPayment?.status === "confirmed") {
+  if (isPaidStatus(existingPayment?.status)) {
     return {
       code: "already_confirmed",
       error: "Pembayaran periode ini sudah diterima admin.",

@@ -13,9 +13,11 @@ import {
   formatDateTimeLabel,
   formatRupiah,
   getAdminPaymentDetail,
+  isPaidStatus,
   paymentStatusLabel,
 } from "@/lib/arisan";
 import { requireArisanAdmin } from "@/lib/auth/user";
+import { isSubscriptionExpired } from "@/lib/subscription";
 
 import { confirmPaymentAction, rejectPaymentAction } from "../actions";
 
@@ -86,10 +88,13 @@ function ReadTile({
 
 export default async function PaymentDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ arisanId: string; paymentId: string }>;
+  searchParams: Promise<{ gate?: string }>;
 }) {
   const { arisanId, paymentId } = await params;
+  const { gate } = await searchParams;
   const context = await requireArisanAdmin(arisanId);
 
   if (!context) {
@@ -129,6 +134,7 @@ export default async function PaymentDetailPage({
   const detectedAmount = getNumberValue(payment.aiResultJson, "detectedAmount");
   const confidence = getNumberValue(payment.aiResultJson, "confidence") ?? 0;
   const warnings = getWarnings(payment.aiResultJson);
+  const expired = await isSubscriptionExpired(arisanId);
 
   return (
     <>
@@ -140,6 +146,20 @@ export default async function PaymentDetailPage({
         subtitle={`${payment.periodName} - ${formatDateTimeLabel(payment.createdAt)}`}
         title={payment.memberName ?? "Anggota"}
       />
+      {expired || gate === "expired" ? (
+        <div className="rounded-3xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm">
+          <p className="text-sm font-semibold text-red-900">
+            Paket arisan sudah habis.
+          </p>
+          <p className="mt-1 text-sm leading-6 text-red-800">
+            Konfirmasi pembayaran baru dikunci sampai paket diperpanjang. Data
+            lama tetap bisa dilihat.
+          </p>
+          <ButtonLink className="mt-3 inline-flex" href={`/app/arisan/${arisanId}/paket`}>
+            Perpanjang Paket
+          </ButtonLink>
+        </div>
+      ) : null}
       {payment.status === "duplicate_check" ? (
         <div className="rounded-3xl border border-orange-200/80 bg-orange-50/90 p-4 shadow-sm">
           <p className="text-sm font-semibold text-orange-950">
@@ -161,7 +181,7 @@ export default async function PaymentDetailPage({
       ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
-          accent={payment.status === "confirmed" ? "emerald" : payment.status === "rejected" ? "red" : "amber"}
+          accent={isPaidStatus(payment.status) ? "emerald" : payment.status === "rejected" ? "red" : "amber"}
           label="Status"
           value={<StatusBadge status={paymentStatusLabel(payment.status)} />}
         />
@@ -319,9 +339,18 @@ export default async function PaymentDetailPage({
                   required
                 />
               </div>
-              <button className={`${buttonStyles.primary} w-full`} type="submit">
+              <button
+                className={`${buttonStyles.primary} w-full`}
+                disabled={expired}
+                type="submit"
+              >
                 Terima
               </button>
+              {expired ? (
+                <p className="text-xs leading-5 text-red-700">
+                  Perpanjang paket dulu untuk konfirmasi pembayaran.
+                </p>
+              ) : null}
             </form>
 
             <form

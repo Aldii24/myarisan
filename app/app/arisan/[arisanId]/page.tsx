@@ -5,6 +5,8 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock3,
+  FileDown,
+  FileSpreadsheet,
   Landmark,
   Package as PackageIcon,
   ReceiptText,
@@ -36,10 +38,11 @@ import {
   getArisanDashboardData,
   getJoinShareText,
   getMemberDashboardData,
+  isPaidStatus,
   paymentStatusLabel,
 } from "@/lib/arisan";
 import { requireArisanMembership } from "@/lib/auth/user";
-import { getPackageStatus } from "@/lib/subscription";
+import { getExportCapabilities, getPackageStatus } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 
 import { logoutAction } from "../../actions";
@@ -135,7 +138,10 @@ async function AdminDashboard({
     return <NotFoundCard />;
   }
 
-  const packageStatus = await getPackageStatus(arisanId);
+  const [packageStatus, exportCapabilities] = await Promise.all([
+    getPackageStatus(arisanId),
+    getExportCapabilities(arisanId),
+  ]);
   const unpaidCount = Math.max(dashboard.memberCount - dashboard.paidCount, 0);
   const shareText = getJoinShareText(dashboard.group.joinCode);
   const recapText = buildRecapText({
@@ -426,8 +432,54 @@ async function AdminDashboard({
                   Ringkasan pembayaran siap disalin ke grup.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
+              <CardContent className="space-y-4 px-4 pb-4 md:px-6 md:pb-6">
                 <CopyShareText text={recapText} />
+                <div>
+                  <p className="text-xs font-medium text-zinc-500">
+                    Export rekap
+                  </p>
+                  {exportCapabilities.pdf || exportCapabilities.excel ? (
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {exportCapabilities.pdf ? (
+                        <a
+                          className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "w-full",
+                          )}
+                          href={`/api/arisan/${arisanId}/export?format=pdf`}
+                        >
+                          <FileDown />
+                          PDF
+                        </a>
+                      ) : null}
+                      {exportCapabilities.excel ? (
+                        <a
+                          className={cn(
+                            buttonVariants({ variant: "outline" }),
+                            "w-full",
+                          )}
+                          href={`/api/arisan/${arisanId}/export?format=excel`}
+                        >
+                          <FileSpreadsheet />
+                          Excel
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {!exportCapabilities.excel ? (
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      {exportCapabilities.pdf
+                        ? "Export Excel tersedia di paket Pro dan Premium."
+                        : "Export PDF dan Excel tersedia di paket berbayar."}{" "}
+                      <Link
+                        className="font-medium text-emerald-700 underline-offset-2 hover:underline"
+                        href={`/app/arisan/${arisanId}/paket`}
+                      >
+                        Lihat Paket
+                      </Link>
+                    </p>
+                  ) : null}
+                </div>
               </CardContent>
             </Card>
 
@@ -634,7 +686,7 @@ async function MemberDashboard({
                     </AlertDescription>
                   </Alert>
                 ) : null}
-                {dashboard.payment?.status === "confirmed" ? (
+                {isPaidStatus(dashboard.payment?.status) ? (
                   <Alert className="border-emerald-200 bg-emerald-50">
                     <CheckCircle2 className="text-emerald-700" />
                     <AlertDescription className="text-emerald-800">

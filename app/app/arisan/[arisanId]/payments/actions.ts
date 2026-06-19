@@ -31,14 +31,18 @@ export async function confirmPaymentAction(
     redirect(`/app/arisan/${arisanId}/payments/${paymentId}`);
   }
 
-  const updated = await confirmPaymentById({
+  const result = await confirmPaymentById({
     actorUserId: context.user.id,
     amount,
     arisanId,
     paymentId,
   });
 
-  if (!updated) {
+  if (!result.ok) {
+    if (result.reason === "expired") {
+      redirect(`/app/arisan/${arisanId}/payments/${paymentId}?gate=expired`);
+    }
+
     redirect(`/app/arisan/${arisanId}/payments`);
   }
 

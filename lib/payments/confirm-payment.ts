@@ -3,8 +3,18 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { memberships, payments, periods } from "@/db/schema";
+import { memberships, payments, periods, type Payment } from "@/db/schema";
 import { createAuditLog } from "@/lib/audit";
+import { isSubscriptionExpired } from "@/lib/subscription";
+
+export type ConfirmPaymentResult =
+  | { ok: true; payment: Payment }
+  | { ok: false; reason: "expired" | "not_found" };
+
+// PRD §8.3: confirming a new payment is locked while the group's paid plan is
+// expired. Surfaced to the admin so they renew before confirming.
+export const expiredConfirmationMessage =
+  "Paket arisan sudah habis. Perpanjang paket dulu untuk konfirmasi pembayaran baru.";
 
 export type PendingPayment = {
   id: string;
@@ -68,11 +78,15 @@ export async function confirmPaymentById(input: {
   paymentId: string;
   amount: number;
   actorUserId: string;
-}) {
+}): Promise<ConfirmPaymentResult> {
   const existing = await loadPayment(input.arisanId, input.paymentId);
 
   if (!existing) {
-    return null;
+    return { ok: false, reason: "not_found" };
+  }
+
+  if (await isSubscriptionExpired(input.arisanId)) {
+    return { ok: false, reason: "expired" };
   }
 
   const [updated] = await db
@@ -104,7 +118,7 @@ export async function confirmPaymentById(input: {
     entityType: "payment",
   });
 
-  return updated;
+  return { ok: true, payment: updated };
 }
 
 export async function rejectPaymentById(input: {

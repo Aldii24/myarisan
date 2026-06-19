@@ -60,8 +60,14 @@ export function formatDateTimeLabel(value: Date | null | undefined) {
   }).format(value);
 }
 
+// A payment counts as paid when the admin confirmed a proof or recorded it
+// manually (PRD §7.3). Both feed paid counts, totals, and "sudah bayar" status.
+export function isPaidStatus(status: string | null | undefined) {
+  return status === "confirmed" || status === "manual";
+}
+
 export function paymentStatusLabel(status: string | null | undefined) {
-  if (status === "confirmed") {
+  if (status === "confirmed" || status === "manual") {
     return "Sudah Bayar";
   }
 
@@ -197,8 +203,8 @@ export async function getArisanDashboardData(arisanId: string) {
           ),
         )
     : [];
-  const confirmedPayments = activePeriodPayments.filter(
-    (payment) => payment.status === "confirmed",
+  const confirmedPayments = activePeriodPayments.filter((payment) =>
+    isPaidStatus(payment.status),
   );
   const confirmedUserIds = new Set(
     confirmedPayments
@@ -341,7 +347,7 @@ export async function getMemberPaymentHistory(arisanId: string, userId: string) 
     )
     .orderBy(desc(periods.dueDate), desc(payments.createdAt));
 
-  const confirmed = rows.filter((row) => row.status === "confirmed");
+  const confirmed = rows.filter((row) => isPaidStatus(row.status));
 
   return {
     confirmedCount: confirmed.length,
@@ -447,6 +453,111 @@ ${unpaidList}
 
 Giliran bulan ini:
 ${input.drawMemberName ?? "Belum diatur"}`;
+}
+
+export type RecapExportRow = {
+  name: string;
+  status: string;
+  amount: number | null;
+  paidAt: Date | null;
+};
+
+export type RecapExportData = {
+  arisanName: string;
+  periodName: string | null;
+  dueDate: string | null;
+  amountPerPeriod: number;
+  drawMemberName: string | null;
+  generatedAt: Date;
+  summary: {
+    memberCount: number;
+    paidCount: number;
+    unpaidCount: number;
+    pendingCount: number;
+    totalCollected: number;
+  };
+  rows: RecapExportRow[];
+};
+
+// Structured recap for the active period, used by both PDF and Excel exporters.
+// One row per member with their latest active-period payment.
+export async function getRecapExportData(
+  arisanId: string,
+  generatedAt = new Date(),
+): Promise<RecapExportData | null> {
+  const dashboard = await getArisanDashboardData(arisanId);
+
+  if (!dashboard) {
+    return null;
+  }
+
+  const memberRows = await db
+    .select({
+      displayName: memberships.displayName,
+      userId: memberships.userId,
+    })
+    .from(memberships)
+    .where(
+      and(
+        eq(memberships.arisanGroupId, arisanId),
+        eq(memberships.role, "member"),
+        ne(memberships.joinStatus, "removed"),
+      ),
+    )
+    .orderBy(memberships.displayName);
+
+  const periodPayments = dashboard.activePeriod
+    ? await db
+        .select({
+          amount: payments.amount,
+          confirmedAt: payments.confirmedAt,
+          memberUserId: payments.memberUserId,
+          status: payments.status,
+        })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.arisanGroupId, arisanId),
+            eq(payments.periodId, dashboard.activePeriod.id),
+          ),
+        )
+    : [];
+
+  const latestByMember = new Map<string, (typeof periodPayments)[number]>();
+
+  for (const payment of periodPayments) {
+    if (payment.memberUserId && !latestByMember.has(payment.memberUserId)) {
+      latestByMember.set(payment.memberUserId, payment);
+    }
+  }
+
+  const rows: RecapExportRow[] = memberRows.map((member) => {
+    const payment = member.userId ? latestByMember.get(member.userId) : undefined;
+
+    return {
+      amount: payment && isPaidStatus(payment.status) ? payment.amount ?? null : null,
+      name: member.displayName,
+      paidAt: payment?.confirmedAt ?? null,
+      status: paymentStatusLabel(payment?.status),
+    };
+  });
+
+  return {
+    amountPerPeriod: dashboard.group.amountPerPeriod,
+    arisanName: dashboard.group.name,
+    drawMemberName: dashboard.drawMemberName,
+    dueDate: dashboard.activePeriod?.dueDate ?? null,
+    generatedAt,
+    periodName: dashboard.activePeriod?.name ?? null,
+    rows,
+    summary: {
+      memberCount: dashboard.memberCount,
+      paidCount: dashboard.paidCount,
+      pendingCount: dashboard.pendingCount,
+      totalCollected: dashboard.totalCollected,
+      unpaidCount: dashboard.unpaidMembers.length,
+    },
+  };
 }
 
 export async function getArisanMembers(arisanId: string) {

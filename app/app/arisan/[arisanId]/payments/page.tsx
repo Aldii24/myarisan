@@ -12,9 +12,11 @@ import {
   formatDateTimeLabel,
   formatRupiah,
   getAdminPayments,
+  isPaidStatus,
   paymentStatusLabel,
 } from "@/lib/arisan";
 import { requireArisanAdmin } from "@/lib/auth/user";
+import { canUseAutomaticProof, isSubscriptionExpired } from "@/lib/subscription";
 
 type PaymentCard = Awaited<ReturnType<typeof getAdminPayments>>[number];
 
@@ -143,24 +145,61 @@ export default async function AdminPaymentsPage({
     );
   }
 
-  const paymentRows = await getAdminPayments(arisanId);
+  const [paymentRows, proofGate, expired] = await Promise.all([
+    getAdminPayments(arisanId),
+    canUseAutomaticProof(arisanId),
+    isSubscriptionExpired(arisanId),
+  ]);
   const pendingPayments = paymentRows.filter(
     (payment) =>
       payment.status === "pending" || payment.status === "duplicate_check",
   );
-  const confirmedPayments = paymentRows.filter(
-    (payment) => payment.status === "confirmed",
+  const confirmedPayments = paymentRows.filter((payment) =>
+    isPaidStatus(payment.status),
   );
   const rejectedPayments = paymentRows.filter((payment) => payment.status === "rejected");
+  const quotaExhausted = !proofGate.allowed && proofGate.reason === "quota";
 
   return (
     <>
       <DashboardHeader
-        actions={<ButtonLink href={`/app/arisan/${arisanId}`}>Kembali</ButtonLink>}
+        actions={
+          <>
+            <ButtonLink
+              href={`/app/arisan/${arisanId}/payments/manual`}
+              variant="primary"
+            >
+              Catat Manual
+            </ButtonLink>
+            <ButtonLink href={`/app/arisan/${arisanId}`}>Kembali</ButtonLink>
+          </>
+        }
         eyebrow="Konfirmasi Bukti"
         subtitle="Cek bukti setor anggota satu per satu. Hasil baca otomatis hanya bantuan, keputusan tetap dari admin."
         title="Pembayaran Anggota"
       />
+
+      {expired ? (
+        <div className="rounded-3xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm">
+          <p className="text-sm font-semibold text-red-900">
+            Paket arisan sudah habis.
+          </p>
+          <p className="mt-1 text-sm leading-6 text-red-800">
+            Konfirmasi pembayaran baru dan catat manual dikunci sampai paket
+            diperpanjang. Bukti lama tetap bisa dilihat.
+          </p>
+        </div>
+      ) : quotaExhausted ? (
+        <div className="rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm">
+          <p className="text-sm font-semibold text-amber-950">
+            Kuota baca bukti otomatis bulan ini habis.
+          </p>
+          <p className="mt-1 text-sm leading-6 text-amber-900">
+            Pembayaran tetap bisa dicatat manual oleh admin lewat tombol Catat
+            Manual. Upgrade paket untuk menambah kuota bukti otomatis.
+          </p>
+        </div>
+      ) : null}
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           accent="amber"

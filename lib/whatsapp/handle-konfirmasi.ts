@@ -8,6 +8,7 @@ import { formatRupiah } from "@/lib/arisan";
 import type { getUserMemberships } from "@/lib/auth/user";
 import {
   confirmPaymentById,
+  expiredConfirmationMessage,
   getPendingPaymentsForArisan,
   rejectPaymentById,
 } from "@/lib/payments/confirm-payment";
@@ -167,13 +168,19 @@ Balas TERIMA untuk konfirmasi, TERIMA <nominal> untuk ubah nominal, atau TOLAK.`
       return "Nominal belum terbaca. Balas TERIMA <nominal>, contoh: TERIMA 100000.";
     }
 
-    const updated = await confirmPaymentById({
+    const confirmResult = await confirmPaymentById({
       actorUserId: userId,
       amount,
       arisanId: data.arisanId,
       paymentId: selected.id,
     });
-    result = updated ? "confirmed" : null;
+
+    if (!confirmResult.ok && confirmResult.reason === "expired") {
+      await clearPendingAction(userId);
+      return expiredConfirmationMessage;
+    }
+
+    result = confirmResult.ok ? "confirmed" : null;
   } else {
     return "Balas TERIMA, TERIMA <nominal>, atau TOLAK.";
   }

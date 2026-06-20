@@ -3,7 +3,7 @@ import {
   getWhatsAppConfig,
   reportMissingWhatsAppEnv,
 } from "@/lib/whatsapp/config";
-import { handleWhatsAppProofImage } from "@/lib/whatsapp/handle-proof-image";
+import { handleWhatsAppImage } from "@/lib/whatsapp/handle-image";
 import {
   recordInboundWhatsAppMessage,
   updateInboundWhatsAppStatus,
@@ -311,7 +311,7 @@ export async function POST(request: Request) {
       const file = new File([Uint8Array.from(media.buffer)], media.filename, {
         type: media.contentType,
       });
-      const proofResult = await handleWhatsAppProofImage({
+      const proofResult = await handleWhatsAppImage({
         caption: message.caption,
         file,
         userId: inbound.userId,

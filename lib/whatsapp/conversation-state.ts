@@ -11,7 +11,11 @@ export type PendingAction =
   | "confirm_payment"
   | "manage_period"
   | "manage_giliran"
-  | "manage_members";
+  | "manage_members"
+  | "manage_settings"
+  | "manage_package"
+  | "manage_owner_review"
+  | "record_payment";
 
 export type PendingActionState = {
   action: PendingAction;

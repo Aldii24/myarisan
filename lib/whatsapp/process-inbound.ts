@@ -4,9 +4,13 @@ import { parseWhatsAppCommand, type WhatsAppCommand } from "./command-parser";
 import { getPendingAction } from "./conversation-state";
 import { handleWhatsAppCommand } from "./handle-command";
 import { handleAnggotaInput } from "./handle-anggota";
+import { handleCatatBayarInput } from "./handle-catat-bayar";
 import { handleCreateArisanInput } from "./handle-create-arisan";
 import { handleGiliranInput } from "./handle-giliran";
 import { handleKonfirmasiInput } from "./handle-konfirmasi";
+import { handleOwnerInput } from "./handle-owner";
+import { handlePaketInput } from "./handle-paket";
+import { handlePengaturanInput } from "./handle-pengaturan";
 import { handlePeriodeInput } from "./handle-periode";
 import { handleResetPinInput } from "./handle-reset-pin";
 import {
@@ -70,6 +74,14 @@ export async function processInboundWhatsAppText(input: {
       reply = await handleGiliranInput(inbound.userId, input.text, pendingAction);
     } else if (pendingAction?.action === "manage_members") {
       reply = await handleAnggotaInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "manage_settings") {
+      reply = await handlePengaturanInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "record_payment") {
+      reply = await handleCatatBayarInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "manage_package") {
+      reply = await handlePaketInput(inbound.userId, input.text, pendingAction);
+    } else if (pendingAction?.action === "manage_owner_review") {
+      reply = await handleOwnerInput(inbound.userId, input.text, pendingAction);
     } else {
       command = parseWhatsAppCommand(input.text);
       reply = await handleWhatsAppCommand({

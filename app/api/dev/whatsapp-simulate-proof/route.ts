@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { debugWhatsApp } from "@/lib/whatsapp/config";
-import { handleWhatsAppProofImage } from "@/lib/whatsapp/handle-proof-image";
+import { handleWhatsAppImage } from "@/lib/whatsapp/handle-image";
 import {
   recordInboundWhatsAppMessage,
   updateInboundWhatsAppStatus,
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       throw new Error("Pengguna WhatsApp tidak ditemukan.");
     }
 
-    const result = await handleWhatsAppProofImage({
+    const result = await handleWhatsAppImage({
       caption,
       file,
       userId: inbound.userId,

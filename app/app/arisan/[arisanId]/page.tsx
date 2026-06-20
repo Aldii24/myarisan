@@ -10,6 +10,7 @@ import {
   Landmark,
   Package as PackageIcon,
   ReceiptText,
+  Settings,
   UserPlus,
   Users,
   WalletCards,
@@ -402,6 +403,11 @@ async function AdminDashboard({
                     href: `/app/arisan/${arisanId}/paket`,
                     icon: PackageIcon,
                     label: "Paket",
+                  },
+                  {
+                    href: `/app/arisan/${arisanId}/pengaturan`,
+                    icon: Settings,
+                    label: "Pengaturan",
                   },
                 ].map((item) => {
                   const Icon = item.icon;

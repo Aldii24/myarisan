@@ -1,15 +1,13 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { db } from "@/db";
-import { invoices } from "@/db/schema";
-import { createAuditLog } from "@/lib/audit";
 import { requireArisanAdmin } from "@/lib/auth/user";
-import { saveInvoiceProofFile, validatePaymentProofFile } from "@/lib/storage";
-import { getPlanById } from "@/lib/subscription";
+import {
+  attachInvoiceProof,
+  createPackageInvoice,
+} from "@/lib/payments/package-invoice";
 
 export type UploadInvoiceProofState = {
   error?: string;
@@ -23,39 +21,18 @@ export async function choosePackageAction(arisanId: string, planId: string) {
     redirect(`/app/arisan/${arisanId}`);
   }
 
-  const plan = await getPlanById(planId);
+  const result = await createPackageInvoice({
+    actorUserId: context.user.id,
+    arisanId,
+    planId,
+  });
 
-  if (!plan || plan.id === "free" || plan.price <= 0) {
+  if (!result.ok) {
     redirect(`/app/arisan/${arisanId}/paket`);
   }
 
-  const [invoice] = await db
-    .insert(invoices)
-    .values({
-      adminUserId: context.user.id,
-      amount: plan.price,
-      arisanGroupId: arisanId,
-      paymentMethod: "manual_qris",
-      planId: plan.id,
-      status: "pending",
-    })
-    .returning();
-
-  await createAuditLog({
-    action: "invoice.create",
-    actorUserId: context.user.id,
-    afterJson: {
-      amount: invoice.amount,
-      planId: invoice.planId,
-      status: invoice.status,
-    },
-    arisanGroupId: arisanId,
-    entityId: invoice.id,
-    entityType: "invoice",
-  });
-
   revalidatePath(`/app/arisan/${arisanId}/paket`);
-  redirect(`/app/arisan/${arisanId}/paket/invoices/${invoice.id}`);
+  redirect(`/app/arisan/${arisanId}/paket/invoices/${result.invoiceId}`);
 }
 
 export async function uploadInvoiceProofAction(
@@ -70,59 +47,22 @@ export async function uploadInvoiceProofAction(
     return { error: "Hanya admin arisan yang bisa mengirim bukti paket." };
   }
 
-  const [invoice] = await db
-    .select()
-    .from(invoices)
-    .where(and(eq(invoices.id, invoiceId), eq(invoices.arisanGroupId, arisanId)))
-    .limit(1);
-
-  if (!invoice) {
-    return { error: "Tagihan paket tidak ditemukan." };
-  }
-
-  if (invoice.status === "paid") {
-    return { error: "Tagihan paket ini sudah dibayar." };
-  }
-
   const proofFile = formData.get("proofImage");
 
   if (!(proofFile instanceof File)) {
     return { error: "Upload bukti pembayaran paket dulu." };
   }
 
-  const validationError = validatePaymentProofFile(proofFile);
-
-  if (validationError) {
-    return { error: validationError };
-  }
-
-  const storedFile = await saveInvoiceProofFile(proofFile);
-
-  const [updatedInvoice] = await db
-    .update(invoices)
-    .set({
-      proofImageUrl: storedFile.publicPath,
-      rejectionReason: null,
-      status: "pending_verification",
-    })
-    .where(and(eq(invoices.id, invoiceId), eq(invoices.arisanGroupId, arisanId)))
-    .returning();
-
-  await createAuditLog({
-    action: "invoice.proof_upload",
+  const result = await attachInvoiceProof({
     actorUserId: context.user.id,
-    afterJson: {
-      proofImageUrl: updatedInvoice.proofImageUrl,
-      status: updatedInvoice.status,
-    },
-    arisanGroupId: arisanId,
-    beforeJson: {
-      proofImageUrl: invoice.proofImageUrl,
-      status: invoice.status,
-    },
-    entityId: invoiceId,
-    entityType: "invoice",
+    arisanId,
+    file: proofFile,
+    invoiceId,
   });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
 
   revalidatePath(`/app/arisan/${arisanId}/paket`);
   revalidatePath(`/app/arisan/${arisanId}/paket/invoices/${invoiceId}`);

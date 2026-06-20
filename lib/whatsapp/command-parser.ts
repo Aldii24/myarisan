@@ -4,12 +4,15 @@ export type WhatsAppCommand =
   | { name: "bayar" }
   | { name: "belum-bayar" }
   | { name: "buat-arisan" }
+  | { name: "catat-bayar" }
   | { name: "dashboard" }
   | { name: "giliran" }
   | { name: "join"; code: string | null }
   | { name: "konfirmasi" }
   | { name: "menu" }
+  | { name: "owner" }
   | { name: "paket" }
+  | { name: "pengaturan" }
   | { name: "periode" }
   | { name: "rekap" }
   | { name: "rekening" }
@@ -26,11 +29,23 @@ const exactCommands: Record<string, WhatsAppCommand> = {
   bayar: { name: "bayar" },
   "belum bayar": { name: "belum-bayar" },
   "buat arisan": { name: "buat-arisan" },
+  "catat bayar": { name: "catat-bayar" },
+  catat: { name: "catat-bayar" },
+  "catat pembayaran": { name: "catat-bayar" },
   dashboard: { name: "dashboard" },
   giliran: { name: "giliran" },
   konfirmasi: { name: "konfirmasi" },
   menu: { name: "menu" },
+  owner: { name: "owner" },
+  "cek paket": { name: "owner" },
+  "review paket": { name: "owner" },
   paket: { name: "paket" },
+  "atur paket": { name: "paket" },
+  "ganti paket": { name: "paket" },
+  upgrade: { name: "paket" },
+  langganan: { name: "paket" },
+  pengaturan: { name: "pengaturan" },
+  "atur arisan": { name: "pengaturan" },
   periode: { name: "periode" },
   "periode baru": { name: "periode" },
   "mulai periode": { name: "periode" },

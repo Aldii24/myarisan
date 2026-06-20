@@ -7,7 +7,6 @@ import { arisanGroups } from "@/db/schema";
 import {
   buildRecapText,
   formatDateLabel,
-  formatDateTimeLabel,
   formatRupiah,
   getArisanDashboardData,
   getMemberDashboardData,
@@ -16,14 +15,18 @@ import {
 } from "@/lib/arisan";
 import { getUserMemberships } from "@/lib/auth/user";
 import { getGiliranData } from "@/lib/giliran";
-import { getPackageStatus } from "@/lib/subscription";
+import { isOwnerUserId } from "@/lib/owner";
 
 import type { WhatsAppCommand } from "./command-parser";
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
 import { beginManageAnggota } from "./handle-anggota";
+import { beginCatatBayar } from "./handle-catat-bayar";
 import { beginCreateArisan } from "./handle-create-arisan";
 import { beginManageGiliran } from "./handle-giliran";
 import { beginKonfirmasi } from "./handle-konfirmasi";
+import { beginOwnerReview } from "./handle-owner";
+import { beginPaket } from "./handle-paket";
+import { beginPengaturan } from "./handle-pengaturan";
 import { beginPeriode } from "./handle-periode";
 import { beginResetPin } from "./handle-reset-pin";
 
@@ -64,10 +67,12 @@ function adminMenu() {
 - belum bayar
 - tagih
 - konfirmasi
+- catat bayar
 - anggota
 - giliran
 - periode
 - paket
+- pengaturan
 - dashboard
 - bantuan
 - reset pin`;
@@ -267,23 +272,28 @@ ${dashboard.unpaidMembers.map((name) => `- ${name}`).join("\n")}
 Silakan transfer ke rekening admin dan kirim bukti melalui MyArisan.`;
 }
 
-async function handlePackage(memberships: Membership[]) {
+async function handlePackage(userId: string, memberships: Membership[]) {
   const selected = selectSingleAdmin(memberships);
 
   if (!selected.membership) {
     return selected.error!;
   }
 
-  const packageStatus = await getPackageStatus(selected.membership.arisanGroupId);
+  return beginPaket(
+    userId,
+    selected.membership.arisanGroupId,
+    selected.membership.arisanName,
+  );
+}
 
-  return `Paket ${selected.membership.arisanName}
-Paket saat ini: ${packageStatus.currentPlan.name}
-Status: ${packageStatus.status}
-Anggota: ${packageStatus.memberUsed}/${packageStatus.memberLimit}
-Baca bukti: ${packageStatus.proofUsed}/${packageStatus.proofLimit}
-Aktif sampai: ${formatDateTimeLabel(packageStatus.activeUntil)}
+async function handlePengaturan(userId: string, memberships: Membership[]) {
+  const selected = selectSingleAdmin(memberships);
 
-${dashboardUrl(`/app/arisan/${selected.membership.arisanGroupId}/paket`)}`;
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  return beginPengaturan(userId, selected.membership.arisanGroupId);
 }
 
 function selectSingleMembership(memberships: Membership[]) {
@@ -444,6 +454,16 @@ async function handleAnggota(userId: string, memberships: Membership[]) {
   return beginManageAnggota(userId, selected.membership.arisanGroupId);
 }
 
+async function handleCatatBayar(userId: string, memberships: Membership[]) {
+  const selected = selectSingleAdmin(memberships);
+
+  if (!selected.membership) {
+    return selected.error!;
+  }
+
+  return beginCatatBayar(userId, selected.membership.arisanGroupId);
+}
+
 export async function handleWhatsAppCommand(input: {
   command: WhatsAppCommand;
   userId: string;
@@ -452,16 +472,25 @@ export async function handleWhatsAppCommand(input: {
 
   switch (input.command.name) {
     case "menu":
-    case "unknown":
+    case "unknown": {
+      const ownerHint = (await isOwnerUserId(input.userId))
+        ? "\n\nKamu owner MyArisan. Ketik OWNER untuk cek bukti paket."
+        : "";
+
       if (adminMemberships(memberships).length > 0) {
-        return adminMenu();
+        return `${adminMenu()}${ownerHint}`;
       }
 
       if (memberships.length > 0) {
-        return memberMenu();
+        return `${memberMenu()}${ownerHint}`;
+      }
+
+      if (ownerHint) {
+        return `Menu owner MyArisan${ownerHint}`;
       }
 
       return joinHelp();
+    }
     case "bantuan":
       return helpText(memberships);
     case "join":
@@ -488,10 +517,16 @@ export async function handleWhatsAppCommand(input: {
       return beginKonfirmasi(input.userId, memberships);
     case "anggota":
       return handleAnggota(input.userId, memberships);
+    case "catat-bayar":
+      return handleCatatBayar(input.userId, memberships);
     case "periode":
       return beginPeriode(input.userId, memberships);
     case "paket":
-      return handlePackage(memberships);
+      return handlePackage(input.userId, memberships);
+    case "owner":
+      return beginOwnerReview(input.userId);
+    case "pengaturan":
+      return handlePengaturan(input.userId, memberships);
     case "dashboard":
       return `Buka dashboard MyArisan: ${dashboardUrl("/app")}`;
     case "reset-pin":

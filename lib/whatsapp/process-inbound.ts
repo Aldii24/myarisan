@@ -18,6 +18,7 @@ import {
   recordInboundWhatsAppMessage,
   updateInboundWhatsAppStatus,
 } from "./inbound";
+import type { WhatsAppReply } from "./send-message";
 
 export async function processInboundWhatsAppText(input: {
   fromPhone: string;
@@ -53,7 +54,7 @@ export async function processInboundWhatsAppText(input: {
     const pendingAction = await getPendingAction(inbound.userId);
 
     let command: WhatsAppCommand | null = null;
-    let reply: string;
+    let reply: WhatsAppReply;
 
     if (pendingAction?.action === "select_arisan") {
       reply = await handleSelectArisanInput(

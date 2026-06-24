@@ -14,10 +14,20 @@ type SendResult =
       status: "failed" | "skipped_outside_window";
     };
 
+// An outbound reply is either plain text or a single image with a caption. The
+// webhook/process layer passes these around without caring how they're sent —
+// see sendWhatsAppReply.
+export type WhatsAppReply =
+  | string
+  | { caption: string; imageUrl: string; type: "image" };
+
+type OutboundMessageType = "image" | "text";
+
 async function logOutbound(input: {
   body: string;
   costType: "free_window" | "skipped_outside_window";
   messageId?: string | null;
+  messageType?: OutboundMessageType;
   processedStatus: "failed" | "processed" | "skipped";
   toPhone: string;
   userId?: string | null;
@@ -28,7 +38,7 @@ async function logOutbound(input: {
       costType: input.costType,
       direction: "outbound",
       fromPhone: input.toPhone,
-      messageType: "text",
+      messageType: input.messageType ?? "text",
       processedStatus: input.processedStatus,
       userId: input.userId ?? null,
       whatsappMessageId: input.messageId ?? null,
@@ -56,7 +66,60 @@ export async function sendWhatsAppText(input: {
   body: string;
   toPhone: string;
 }): Promise<SendResult> {
-  const { body, toPhone } = input;
+  return sendWhatsAppMessage({
+    logBody: input.body,
+    messageType: "text",
+    payload: { text: { body: input.body, preview_url: false }, type: "text" },
+    toPhone: input.toPhone,
+  });
+}
+
+// Sends a single image by public URL (WhatsApp Cloud "image" message). The
+// caption rides along in the same bubble. Same 24h service-window cost guard as
+// text — never sends outside the window.
+export async function sendWhatsAppImage(input: {
+  caption: string;
+  imageUrl: string;
+  toPhone: string;
+}): Promise<SendResult> {
+  return sendWhatsAppMessage({
+    // The caption is what's human-readable, so log that as the body.
+    logBody: input.caption,
+    messageType: "image",
+    payload: {
+      image: { caption: input.caption, link: input.imageUrl },
+      type: "image",
+    },
+    toPhone: input.toPhone,
+  });
+}
+
+// Dispatches a structured reply (text or image) to the right sender.
+export async function sendWhatsAppReply(input: {
+  reply: WhatsAppReply;
+  toPhone: string;
+}): Promise<SendResult> {
+  if (typeof input.reply === "string") {
+    return sendWhatsAppText({ body: input.reply, toPhone: input.toPhone });
+  }
+
+  return sendWhatsAppImage({
+    caption: input.reply.caption,
+    imageUrl: input.reply.imageUrl,
+    toPhone: input.toPhone,
+  });
+}
+
+// Shared send core: the 24h service-window cost guard, config check, Cloud API
+// call, and outbound logging — identical for text and image. Only the Graph API
+// `payload` and the logged message type differ.
+async function sendWhatsAppMessage(input: {
+  logBody: string;
+  messageType: OutboundMessageType;
+  payload: Record<string, unknown>;
+  toPhone: string;
+}): Promise<SendResult> {
+  const { logBody, messageType, payload, toPhone } = input;
   const normalizedPhone = normalizePhone(toPhone);
 
   if (!normalizedPhone) {
@@ -70,12 +133,13 @@ export async function sendWhatsAppText(input: {
 
   if (!user || !isInsideServiceWindow) {
     if (user) {
-      await createSkippedNotification(user.id, body);
+      await createSkippedNotification(user.id, logBody);
     }
 
     await logOutbound({
-      body,
+      body: logBody,
       costType: "skipped_outside_window",
+      messageType,
       processedStatus: "skipped",
       toPhone: normalizedPhone,
       userId: user?.id,
@@ -96,8 +160,9 @@ export async function sendWhatsAppText(input: {
 
   if (!config.accessToken || !config.phoneNumberId) {
     await logOutbound({
-      body,
+      body: logBody,
       costType: "free_window",
+      messageType,
       processedStatus: "failed",
       toPhone: normalizedPhone,
       userId: user.id,
@@ -117,12 +182,8 @@ export async function sendWhatsAppText(input: {
         body: JSON.stringify({
           messaging_product: "whatsapp",
           recipient_type: "individual",
-          text: {
-            body,
-            preview_url: false,
-          },
           to: normalizedPhone,
-          type: "text",
+          ...payload,
         }),
         headers: {
           Authorization: `Bearer ${config.accessToken}`,
@@ -131,15 +192,16 @@ export async function sendWhatsAppText(input: {
         method: "POST",
       },
     );
-    const payload = (await response.json().catch(() => null)) as
+    const responsePayload = (await response.json().catch(() => null)) as
       | { error?: { message?: string }; messages?: Array<{ id?: string }> }
       | null;
-    const messageId = payload?.messages?.[0]?.id ?? null;
+    const messageId = responsePayload?.messages?.[0]?.id ?? null;
 
     await logOutbound({
-      body,
+      body: logBody,
       costType: "free_window",
       messageId,
+      messageType,
       processedStatus: response.ok ? "processed" : "failed",
       toPhone: normalizedPhone,
       userId: user.id,
@@ -147,7 +209,9 @@ export async function sendWhatsAppText(input: {
 
     if (!response.ok) {
       return {
-        error: payload?.error?.message || `WhatsApp API error ${response.status}.`,
+        error:
+          responsePayload?.error?.message ||
+          `WhatsApp API error ${response.status}.`,
         ok: false,
         status: "failed",
       };
@@ -156,8 +220,9 @@ export async function sendWhatsAppText(input: {
     return { messageId, ok: true, status: "sent" };
   } catch (error) {
     await logOutbound({
-      body,
+      body: logBody,
       costType: "free_window",
+      messageType,
       processedStatus: "failed",
       toPhone: normalizedPhone,
       userId: user.id,

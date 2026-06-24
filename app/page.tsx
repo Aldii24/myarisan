@@ -24,11 +24,16 @@ import {
   WalletCards,
 } from "lucide-react";
 
-import { BackgroundBeamsWithCollision } from "@/components/ui/background-beams-with-collision";
 import { buttonVariants } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
+import { HeroBackdrop } from "@/components/landing/hero-backdrop";
 import { LandingNav } from "@/components/landing/landing-nav";
+import {
+  Eyebrow,
+  GradientText,
+  SectionHeading,
+} from "@/components/landing/primitives";
 import { Reveal } from "@/components/landing/reveal";
 import {
   FloatingWhatsAppCta,
@@ -55,6 +60,14 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
+const heroHighlights = [
+  "Mulai dari Rp0",
+  "Tanpa bot di grup",
+  "Dana tetap di admin",
+];
+
+const useCases = ["Arisan RT & komplek", "Kantor", "Komunitas", "Keluarga", "Alumni"];
 
 const problems = [
   {
@@ -146,14 +159,16 @@ const safetyPoints = [
   "Dana arisan tetap langsung ke rekening admin.",
 ];
 
-const plans = [
+const corePlans = [
   {
     name: "Free",
     price: "Rp0",
     description: "Untuk mencoba arisan kecil.",
+    cta: "Coba Gratis",
+    href: "/login",
     features: [
       "5 anggota",
-      "10 bukti/bulan",
+      "50 bukti/bulan",
       "Unlimited chat ke bot",
       "Unlimited cek status bayar",
       "Unlimited lihat rekap",
@@ -164,9 +179,11 @@ const plans = [
     name: "Basic",
     price: "Rp25.000",
     description: "Untuk arisan rutin yang ringkas.",
+    cta: "Pilih Basic",
+    href: "/login",
     features: [
       "15 anggota",
-      "75 bukti/bulan",
+      "Bukti transfer unlimited",
       "Unlimited chat ke bot",
       "Unlimited cek status bayar",
       "Unlimited lihat rekap",
@@ -178,24 +195,28 @@ const plans = [
     name: "Pro",
     price: "Rp50.000",
     description: "Ruang yang pas untuk arisan aktif.",
+    cta: "Pilih Pro",
+    href: "/login",
+    recommended: true,
     features: [
       "30 anggota",
-      "150 bukti/bulan",
+      "Bukti transfer unlimited",
       "Unlimited chat ke bot",
       "Unlimited cek status bayar",
       "Unlimited lihat rekap",
       "Teks rekap siap salin",
       "Prioritas support",
     ],
-    recommended: true,
   },
   {
     name: "Premium",
     price: "Rp100.000",
     description: "Untuk kelompok yang lebih besar.",
+    cta: "Pilih Premium",
+    href: "/login",
     features: [
       "75 anggota",
-      "375 bukti/bulan",
+      "Bukti transfer unlimited",
       "Unlimited chat ke bot",
       "Unlimited cek status bayar",
       "Unlimited lihat rekap",
@@ -203,21 +224,13 @@ const plans = [
       "Prioritas support",
     ],
   },
-  {
-    name: "Custom",
-    price: "Hubungi Kami",
-    description: "Untuk arisan besar atau kebutuhan khusus.",
-    features: [
-      "Jumlah anggota lebih banyak",
-      "Kuota bukti lebih besar",
-      "Penyesuaian kebutuhan grup",
-      "Unlimited chat ke bot",
-      "Unlimited cek status bayar",
-      "Unlimited lihat rekap",
-      "Support prioritas",
-    ],
-    custom: true,
-  },
+];
+
+const customPlanFeatures = [
+  "Jumlah anggota lebih banyak",
+  "Bukti transfer unlimited",
+  "Penyesuaian kebutuhan grup",
+  "Support prioritas",
 ];
 
 const faqs = [
@@ -242,56 +255,11 @@ const faqs = [
       "Tidak. Pengguna login memakai nomor WhatsApp dan PIN pribadi 4 angka.",
   },
   {
-    question: "Kalau kuota bukti habis bagaimana?",
+    question: "Berapa batas baca bukti otomatis tiap bulan?",
     answer:
-      "Admin tetap bisa mencatat manual dari dashboard, atau upgrade paket untuk kuota baca bukti otomatis lebih besar.",
+      "Paket Free bisa membaca 50 bukti otomatis per bulan. Semua paket berbayar mendapat baca bukti unlimited. Kalau kuota Free habis, admin tetap bisa mencatat pembayaran manual dari dashboard.",
   },
 ];
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  centered = false,
-  inverse = false,
-}: {
-  eyebrow: string;
-  title: string;
-  description?: string;
-  centered?: boolean;
-  inverse?: boolean;
-}) {
-  return (
-    <div className={cn("max-w-2xl", centered && "mx-auto text-center")}>
-      <p
-        className={cn(
-          "mb-4 text-xs font-bold tracking-[0.18em] uppercase",
-          inverse ? "text-[#8ed9ba]" : "text-[#13795b]",
-        )}
-      >
-        {eyebrow}
-      </p>
-      <h2
-        className={cn(
-          "text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl lg:text-5xl lg:leading-[1.08]",
-          inverse ? "text-white" : "text-[#18352e]",
-        )}
-      >
-        {title}
-      </h2>
-      {description ? (
-        <p
-          className={cn(
-            "mt-5 text-base leading-7 sm:text-lg",
-            inverse ? "text-white/70" : "text-[#64736e]",
-          )}
-        >
-          {description}
-        </p>
-      ) : null}
-    </div>
-  );
-}
 
 function HeroVisual() {
   return (
@@ -385,23 +353,111 @@ function HeroVisual() {
   );
 }
 
+function PlanCard({
+  plan,
+}: {
+  plan: (typeof corePlans)[number];
+}) {
+  const recommended = Boolean(plan.recommended);
+
+  return (
+    <article
+      className={cn(
+        "relative flex h-full flex-col rounded-[1.75rem] border p-6 transition-transform duration-300 hover:-translate-y-1",
+        recommended
+          ? "border-[#2f9470] bg-[#173f35] text-white shadow-[0_30px_75px_-35px_#173f35] xl:-translate-y-4 xl:hover:-translate-y-5"
+          : "border-[#e0ddd6] bg-[#fbfaf7] shadow-[0_14px_40px_-32px_rgba(23,63,53,0.5)]",
+      )}
+    >
+      {recommended ? (
+        <div className="absolute -top-3 left-6 rounded-full bg-[#c9f0df] px-3 py-1.5 text-[10px] font-extrabold tracking-[0.12em] text-[#155b45] uppercase shadow-sm">
+          Paling pas
+        </div>
+      ) : null}
+      <p
+        className={cn(
+          "text-sm font-extrabold",
+          recommended ? "text-[#c9f0df]" : "text-[#13795b]",
+        )}
+      >
+        {plan.name}
+      </p>
+      <div className="mt-5 flex items-end gap-1">
+        <span className="text-3xl font-extrabold tracking-[-0.04em]">
+          {plan.price}
+        </span>
+        {plan.price !== "Rp0" ? (
+          <span
+            className={cn(
+              "pb-1 text-xs",
+              recommended ? "text-white/55" : "text-[#7d8985]",
+            )}
+          >
+            /bulan
+          </span>
+        ) : null}
+      </div>
+      <p
+        className={cn(
+          "mt-3 min-h-12 text-sm leading-6",
+          recommended ? "text-white/65" : "text-[#65736e]",
+        )}
+      >
+        {plan.description}
+      </p>
+      <div
+        className={cn("my-6 h-px", recommended ? "bg-white/15" : "bg-[#e3e0da]")}
+      />
+      <ul className="space-y-3">
+        {plan.features.map((feature) => (
+          <li
+            className="flex items-start gap-2.5 text-[13px] font-semibold leading-5"
+            key={feature}
+          >
+            <CheckCircle2
+              className={cn(
+                "mt-0.5 size-4 shrink-0",
+                recommended ? "text-[#92dbbc]" : "text-[#39906f]",
+              )}
+            />
+            {feature}
+          </li>
+        ))}
+      </ul>
+      <Link
+        className={cn(
+          buttonVariants({ size: "lg", variant: recommended ? "secondary" : "outline" }),
+          "mt-8 h-11 rounded-xl font-bold",
+          recommended
+            ? "border-0 bg-white text-[#173f35] hover:bg-[#edf7f2]"
+            : "border-[#cbd9d3]",
+        )}
+        href={plan.href}
+      >
+        {plan.cta}
+      </Link>
+    </article>
+  );
+}
+
 export default function Home() {
   return (
     <main className="overflow-hidden bg-[#f8f5ef] text-[#18352e]">
       <LandingNav />
 
-      <BackgroundBeamsWithCollision className="h-auto min-h-[820px] bg-[linear-gradient(180deg,#fbfaf7_0%,#f5f1e9_100%)] pt-20 md:min-h-[850px]">
-        <section className="relative z-20 mx-auto grid w-full max-w-7xl items-center gap-14 px-5 pt-8 pb-16 sm:px-8 lg:grid-cols-[1.02fr_0.98fr] lg:px-10 lg:pt-12 lg:pb-20">
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,#fbfaf7_0%,#f4efe6_100%)] pt-28 pb-16 lg:pt-32 lg:pb-24">
+        <HeroBackdrop />
+        <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-14 px-5 sm:px-8 lg:grid-cols-[1.02fr_0.98fr] lg:px-10">
           <Reveal>
             <div className="max-w-2xl">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#cfe3da] bg-white/75 px-3 py-2 text-xs font-bold text-[#286b56] shadow-sm backdrop-blur">
+              <Eyebrow>
                 <Sparkles className="size-3.5" />
                 Dari bukti transfer sampai rekap grup
-              </div>
-              <h1 className="text-[2.65rem] font-extrabold leading-[1.04] tracking-[-0.055em] text-[#17352e] sm:text-6xl lg:text-[4.3rem]">
+              </Eyebrow>
+              <h1 className="mt-6 text-[2.65rem] font-extrabold leading-[1.04] tracking-[-0.055em] text-balance text-[#17352e] sm:text-6xl lg:text-[4.3rem]">
                 Rekap arisan jadi rapi{" "}
-                <span className="relative inline-block text-[#13795b]">
-                  tanpa scroll
+                <span className="relative inline-block">
+                  <GradientText>tanpa scroll</GradientText>
                   <svg
                     aria-hidden="true"
                     className="absolute -bottom-2 left-0 w-full"
@@ -418,7 +474,7 @@ export default function Home() {
                 </span>{" "}
                 bukti transfer satu-satu.
               </h1>
-              <p className="mt-7 max-w-xl text-base leading-8 text-[#5d6d67] sm:text-lg">
+              <p className="mt-7 max-w-xl text-base leading-8 text-pretty text-[#5d6d67] sm:text-lg">
                 MyArisan membantu admin arisan mencatat bukti setoran, melihat
                 siapa yang sudah atau belum bayar, dan membuat rekap siap kirim
                 ke grup WhatsApp.
@@ -436,7 +492,7 @@ export default function Home() {
                 <a
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
-                    "h-12 rounded-xl border-[#cbd9d3] bg-white/70 px-6 text-sm font-bold",
+                    "h-12 rounded-xl border-[#cbd9d3] bg-white/70 px-6 text-sm font-bold backdrop-blur",
                   )}
                   href="#cara-kerja"
                 >
@@ -444,22 +500,32 @@ export default function Home() {
                 </a>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-[#64736e]">
-                {["Mulai dari Rp0", "Tanpa bot di grup", "Dana tetap di admin"].map(
-                  (item) => (
-                    <span className="flex items-center gap-1.5" key={item}>
-                      <CheckCircle2 className="size-4 text-[#39906f]" />
-                      {item}
-                    </span>
-                  ),
-                )}
+                {heroHighlights.map((item) => (
+                  <span className="flex items-center gap-1.5" key={item}>
+                    <CheckCircle2 className="size-4 text-[#39906f]" />
+                    {item}
+                  </span>
+                ))}
               </div>
             </div>
           </Reveal>
           <Reveal delay={0.15}>
             <HeroVisual />
           </Reveal>
-        </section>
-      </BackgroundBeamsWithCollision>
+        </div>
+      </section>
+
+      <section className="border-y border-[#e8e3d9] bg-[#fbfaf7]">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-8 gap-y-2 px-5 py-6 text-xs font-bold text-[#6c7b76] sm:px-8">
+          <span className="text-[#9aa6a1]">Cocok untuk</span>
+          {useCases.map((useCase) => (
+            <span className="flex items-center gap-2" key={useCase}>
+              <span className="size-1.5 rounded-full bg-[#bcd5cb]" />
+              {useCase}
+            </span>
+          ))}
+        </div>
+      </section>
 
       <section className="bg-[#183f35] px-5 py-20 text-white sm:px-8 lg:py-28">
         <div className="mx-auto max-w-7xl">
@@ -605,103 +671,49 @@ export default function Home() {
               centered
               eyebrow="Harga sederhana"
               title="Mulai gratis, naik saat arisan bertumbuh."
-              description="Pilih berdasarkan jumlah anggota dan kebutuhan baca bukti otomatis. Tidak ada potongan dari dana arisan."
+              description="Paket berbayar memberi baca bukti unlimited dan kapasitas anggota lebih besar. Tidak ada potongan dari dana arisan."
             />
           </Reveal>
-          <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            {plans.map((plan, index) => (
+          <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {corePlans.map((plan, index) => (
               <Reveal delay={index * 0.06} key={plan.name}>
-                <article
-                  className={cn(
-                    "relative flex h-full min-h-[510px] flex-col rounded-[1.75rem] border bg-[#fbfaf7] p-6 xl:p-5",
-                    plan.recommended
-                      ? "border-[#2f9470] bg-[#173f35] text-white shadow-[0_28px_70px_-35px_#173f35] xl:-translate-y-4"
-                      : "border-[#e0ddd6]",
-                  )}
-                >
-                  {plan.recommended ? (
-                    <div className="absolute -top-3 left-6 rounded-full bg-[#c9f0df] px-3 py-1.5 text-[10px] font-extrabold tracking-[0.12em] text-[#155b45] uppercase shadow-sm">
-                      Paling pas
-                    </div>
-                  ) : null}
-                  <p
-                    className={cn(
-                      "text-sm font-extrabold",
-                      plan.recommended ? "text-[#c9f0df]" : "text-[#13795b]",
-                    )}
-                  >
-                    {plan.name}
-                  </p>
-                  <div className="mt-5 flex items-end gap-1">
-                    <span
-                      className={cn(
-                        "font-extrabold tracking-[-0.04em]",
-                        plan.custom ? "text-2xl leading-tight" : "text-3xl",
-                      )}
-                    >
-                      {plan.price}
-                    </span>
-                    {plan.price !== "Rp0" && !plan.custom ? (
-                      <span
-                        className={cn(
-                          "pb-1 text-xs",
-                          plan.recommended ? "text-white/55" : "text-[#7d8985]",
-                        )}
-                      >
-                        /bulan
-                      </span>
-                    ) : null}
-                  </div>
-                  <p
-                    className={cn(
-                      "mt-3 min-h-12 text-sm leading-6",
-                      plan.recommended ? "text-white/65" : "text-[#65736e]",
-                    )}
-                  >
-                    {plan.description}
-                  </p>
-                  <div
-                    className={cn(
-                      "my-6 h-px",
-                      plan.recommended ? "bg-white/15" : "bg-[#e3e0da]",
-                    )}
-                  />
-                  <ul className="space-y-3">
-                    {plan.features.map((feature) => (
-                      <li
-                        className="flex items-start gap-2.5 text-[13px] font-semibold leading-5"
-                        key={feature}
-                      >
-                        <CheckCircle2
-                          className={cn(
-                            "mt-0.5 size-4 shrink-0",
-                            plan.recommended ? "text-[#92dbbc]" : "text-[#39906f]",
-                          )}
-                        />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    className={cn(
-                      buttonVariants({
-                        variant: plan.recommended ? "secondary" : "outline",
-                        size: "lg",
-                      }),
-                      "mt-auto h-11 rounded-xl font-bold",
-                      plan.recommended &&
-                        "border-0 bg-white text-[#173f35] hover:bg-[#edf7f2]",
-                    )}
-                    href={plan.custom ? whatsappUrl : "/login"}
-                    rel={plan.custom ? "noreferrer" : undefined}
-                    target={plan.custom ? "_blank" : undefined}
-                  >
-                    {plan.custom ? "Hubungi via WhatsApp" : "Mulai dari Free"}
-                  </a>
-                </article>
+                <PlanCard plan={plan} />
               </Reveal>
             ))}
           </div>
+          <Reveal>
+            <div className="mt-4 flex flex-col gap-5 rounded-[1.75rem] border border-[#e0ddd6] bg-[#fbfaf7] p-6 lg:flex-row lg:items-center lg:justify-between lg:p-8">
+              <div className="max-w-xl">
+                <p className="text-sm font-extrabold text-[#13795b]">Custom</p>
+                <h3 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-[#18352e]">
+                  Arisan besar atau kebutuhan khusus?
+                </h3>
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                  {customPlanFeatures.map((feature) => (
+                    <span
+                      className="flex items-center gap-2 text-[13px] font-semibold text-[#4a5a54]"
+                      key={feature}
+                    >
+                      <CheckCircle2 className="size-4 text-[#39906f]" />
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <a
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "h-12 shrink-0 rounded-xl bg-[#173f35] px-6 font-bold hover:bg-[#0f2e26]",
+                )}
+                href={whatsappUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <WhatsAppIcon className="size-4" />
+                Hubungi via WhatsApp
+              </a>
+            </div>
+          </Reveal>
         </div>
       </section>
 

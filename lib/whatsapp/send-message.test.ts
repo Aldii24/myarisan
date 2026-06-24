@@ -172,3 +172,77 @@ describe("inside-window send", () => {
     assert.equal(logsTo(schema.messageLogs)[0].values.processedStatus, "failed");
   });
 });
+
+describe("sendWhatsAppImage", () => {
+  test("posts an image payload (link + caption) and logs as an image", async () => {
+    configurePlatform();
+    withUser({ id: "u1", phone: "6281234567890", serviceWindowUntil: new Date(Date.now() + 60_000) });
+
+    const result = await send.sendWhatsAppImage({
+      caption: "Tagihan paket",
+      imageUrl: "https://app.example.com/QRIS/qris.jpeg",
+      toPhone: "081234567890",
+    });
+
+    assert.equal(result.ok, true);
+    assert.equal(fetchMock.mock.callCount(), 1);
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0].arguments[1] as RequestInit).body as string,
+    ) as { image?: { caption?: string; link?: string }; type?: string };
+    assert.equal(body.type, "image");
+    assert.equal(body.image?.link, "https://app.example.com/QRIS/qris.jpeg");
+    assert.equal(body.image?.caption, "Tagihan paket");
+
+    assert.equal(logsTo(schema.messageLogs)[0].values.messageType, "image");
+    // The caption is what's human-readable, so it's logged as the body.
+    assert.equal(logsTo(schema.messageLogs)[0].values.body, "Tagihan paket");
+  });
+
+  test("honors the service-window guard (no send outside the window)", async () => {
+    configurePlatform();
+    withUser({ id: "u1", phone: "6281234567890", serviceWindowUntil: new Date(Date.now() - 60_000) });
+
+    const result = await send.sendWhatsAppImage({
+      caption: "Tagihan paket",
+      imageUrl: "https://app.example.com/QRIS/qris.jpeg",
+      toPhone: "081234567890",
+    });
+
+    assert.equal(result.status, "skipped_outside_window");
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
+});
+
+describe("sendWhatsAppReply dispatch", () => {
+  test("string reply goes out as a text message", async () => {
+    configurePlatform();
+    withUser({ id: "u1", phone: "6281234567890", serviceWindowUntil: new Date(Date.now() + 60_000) });
+
+    await send.sendWhatsAppReply({ reply: "hai", toPhone: "081234567890" });
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0].arguments[1] as RequestInit).body as string,
+    ) as { type?: string };
+    assert.equal(body.type, "text");
+  });
+
+  test("image reply goes out as an image message", async () => {
+    configurePlatform();
+    withUser({ id: "u1", phone: "6281234567890", serviceWindowUntil: new Date(Date.now() + 60_000) });
+
+    await send.sendWhatsAppReply({
+      reply: {
+        caption: "Tagihan paket",
+        imageUrl: "https://app.example.com/QRIS/qris.jpeg",
+        type: "image",
+      },
+      toPhone: "081234567890",
+    });
+
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0].arguments[1] as RequestInit).body as string,
+    ) as { type?: string };
+    assert.equal(body.type, "image");
+  });
+});

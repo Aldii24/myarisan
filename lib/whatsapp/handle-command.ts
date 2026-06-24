@@ -36,6 +36,7 @@ import { beginPaket } from "./handle-paket";
 import { beginPengaturan } from "./handle-pengaturan";
 import { beginPeriode } from "./handle-periode";
 import { beginResetPin } from "./handle-reset-pin";
+import type { WhatsAppReply } from "./send-message";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
@@ -408,14 +409,14 @@ async function handleRiwayat(userId: string, membership: Membership) {
 export async function handleWhatsAppCommand(input: {
   command: WhatsAppCommand;
   userId: string;
-}): Promise<string> {
+}): Promise<WhatsAppReply> {
   const { userId } = input;
   const memberships = await getUserMemberships(userId);
 
-  const withArisan = async (
+  const withArisan = async <T = string>(
     scope: "admin" | "any",
-    run: (membership: Membership) => Promise<string>,
-  ) => {
+    run: (membership: Membership) => Promise<T>,
+  ): Promise<T | string> => {
     const context = await resolveArisanContext({
       command: input.command,
       memberships,
@@ -516,7 +517,7 @@ export async function handleWhatsAppCommand(input: {
         beginPeriode(userId, membership.arisanGroupId, membership.arisanName),
       );
     case "paket":
-      return withArisan("admin", (membership) =>
+      return withArisan<WhatsAppReply>("admin", (membership) =>
         beginPaket(userId, membership.arisanGroupId, membership.arisanName),
       );
     case "owner":

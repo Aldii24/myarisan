@@ -4,6 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 
 import { hashPin } from "../lib/auth/pin-core";
+import { UNLIMITED_PROOF_LIMIT } from "../lib/plan-limits";
 import {
   arisanGroups,
   memberships,
@@ -23,7 +24,7 @@ const planSeeds = [
     },
     id: "free",
     maxMembers: 5,
-    monthlyProofLimit: 10,
+    monthlyProofLimit: 50,
     name: "Free",
     price: 0,
   },
@@ -33,7 +34,7 @@ const planSeeds = [
     },
     id: "basic",
     maxMembers: 15,
-    monthlyProofLimit: 75,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
     name: "Basic",
     price: 25000,
   },
@@ -43,7 +44,7 @@ const planSeeds = [
     },
     id: "pro",
     maxMembers: 30,
-    monthlyProofLimit: 150,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
     name: "Pro",
     price: 50000,
   },
@@ -53,7 +54,7 @@ const planSeeds = [
     },
     id: "premium",
     maxMembers: 75,
-    monthlyProofLimit: 375,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
     name: "Premium",
     price: 100000,
   },

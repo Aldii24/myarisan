@@ -6,7 +6,13 @@ import {
   createPackageInvoice,
   getOpenPackageInvoice,
 } from "@/lib/payments/package-invoice";
-import { getPackageStatus, getPaidPlans } from "@/lib/subscription";
+import { isPubliclyFetchableImageUrl, qrisImageUrl } from "@/lib/payments/qris";
+import {
+  formatProofLimit,
+  formatProofUsage,
+  getPackageStatus,
+  getPaidPlans,
+} from "@/lib/subscription";
 
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
 import {
@@ -15,6 +21,7 @@ import {
   type PendingActionState,
 } from "./conversation-state";
 import { bold, compose, field, footer, header, italic } from "./format";
+import type { WhatsAppReply } from "./send-message";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai", "tidak", "no"]);
 
@@ -42,17 +49,13 @@ function getAppUrl() {
   return getWhatsAppConfig().appUrl;
 }
 
-function qrisImageUrl() {
-  return process.env.NEXT_PUBLIC_MANUAL_QRIS_IMAGE_URL?.trim() || null;
-}
-
 function renderPlanList(plans: PaketPlanItem[]) {
   return plans
     .map(
       (plan, index) =>
         `${index + 1}. ${plan.name} - ${formatRupiah(plan.price)} (${
           plan.maxMembers
-        } anggota, ${plan.monthlyProofLimit} bukti/bulan)`,
+        } anggota, ${formatProofLimit(plan.monthlyProofLimit)} bukti/bulan)`,
     )
     .join("\n");
 }
@@ -66,19 +69,46 @@ function selectPrompt(data: PaketData, prefix?: string) {
   );
 }
 
-function proofPrompt(data: PaketData) {
-  const qris = qrisImageUrl();
-  const qrisLine = qris
-    ? `📷 ${italic("QRIS MyArisan:")}\n${qris}`
-    : `📷 ${italic("Buka QRIS di dashboard:")}\n${getAppUrl()}/app/arisan/${data.arisanId}/paket/invoices/${data.invoiceId}`;
+// Wraps a bill message with the QRIS so the user can pay. When the QRIS image is
+// publicly fetchable (prod), it's sent as a real inline image with the bill as
+// the caption — full parity with the dashboard. On localhost/dev the image
+// can't be fetched by Meta, so it degrades to a text reply with the QRIS link.
+function qrisBillReply(input: {
+  billLines: string;
+  instructions: string;
+}): WhatsAppReply {
+  const url = qrisImageUrl(getAppUrl());
+
+  if (isPubliclyFetchableImageUrl(url)) {
+    return {
+      caption: compose(
+        input.billLines,
+        `📷 ${italic("Scan QRIS MyArisan di atas untuk bayar.")}`,
+        input.instructions,
+      ),
+      imageUrl: url,
+      type: "image",
+    };
+  }
 
   return compose(
-    header("🧾", "Tagihan Dibuat", data.planName),
-    field("💰", "Nominal", `${formatRupiah(data.amount ?? 0)} (aktif 30 hari)`),
-    qrisLine,
-    "📸 Setelah transfer, kirim *foto bukti pembayaran* di chat ini. Paket aktif setelah dicek owner MyArisan.",
-    footer("Ketik BATAL untuk berhenti."),
+    input.billLines,
+    `📷 ${italic("QRIS MyArisan:")}\n${url}`,
+    input.instructions,
   );
+}
+
+function proofPrompt(data: PaketData): WhatsAppReply {
+  return qrisBillReply({
+    billLines: compose(
+      header("🧾", "Tagihan Dibuat", data.planName),
+      field("💰", "Nominal", `${formatRupiah(data.amount ?? 0)} (aktif 30 hari)`),
+    ),
+    instructions: compose(
+      "📸 Setelah transfer, kirim *foto bukti pembayaran* di chat ini. Paket aktif setelah dicek owner MyArisan.",
+      footer("Ketik BATAL untuk berhenti."),
+    ),
+  });
 }
 
 async function loadPlans(): Promise<PaketPlanItem[]> {
@@ -108,7 +138,7 @@ export async function beginPaket(
       field("📦", "Paket saat ini", status.currentPlan.name),
       field("📌", "Status", status.status),
       field("👥", "Anggota", `${status.memberUsed}/${status.memberLimit}`),
-      field("📸", "Baca bukti", `${status.proofUsed}/${status.proofLimit}`),
+      field("📸", "Baca bukti", formatProofUsage(status.proofUsed, status.proofLimit)),
       field("📅", "Aktif sampai", formatDateTimeLabel(status.activeUntil)),
     ].join("\n"),
   );
@@ -137,14 +167,18 @@ export async function beginPaket(
       step: "await_proof",
     } satisfies PaketData);
 
-    return compose(
-      statusSummary,
-      `🧾 Masih ada tagihan ${bold(plan?.name ?? "paket")} yang belum dibayar (${formatRupiah(
-        openInvoice.amount,
-      )}).`,
-      "📸 Kirim *foto bukti pembayaran* di chat ini untuk menyelesaikannya.",
-      footer("Ketik BATAL untuk berhenti."),
-    );
+    return qrisBillReply({
+      billLines: compose(
+        statusSummary,
+        `🧾 Masih ada tagihan ${bold(plan?.name ?? "paket")} yang belum dibayar (${formatRupiah(
+          openInvoice.amount,
+        )}).`,
+      ),
+      instructions: compose(
+        "📸 Kirim *foto bukti pembayaran* di chat ini untuk menyelesaikannya.",
+        footer("Ketik BATAL untuk berhenti."),
+      ),
+    });
   }
 
   await setPendingAction(userId, "manage_package", {
@@ -169,7 +203,7 @@ export async function handlePaketInput(
   userId: string,
   text: string,
   state: PendingActionState,
-) {
+): Promise<WhatsAppReply> {
   const data = state.data as PaketData;
   const trimmed = text.trim();
   const normalized = trimmed.toLocaleLowerCase("id-ID");

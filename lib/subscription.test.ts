@@ -72,7 +72,7 @@ describe("getCurrentPlan / getActiveSubscription", () => {
         return [paidRow("pro", "active", past)];
       }
       if (op === "select" && table === schema.plans) {
-        return [{ id: "free", maxMembers: 5, monthlyProofLimit: 10, name: "Free", price: 0 }];
+        return [{ id: "free", maxMembers: 5, monthlyProofLimit: 50, name: "Free", price: 0 }];
       }
       return undefined;
     });
@@ -170,10 +170,10 @@ describe("canUseAutomaticProof (monthly proof limit + expiry)", () => {
     const future = new Date(Date.now() + MINUTE);
     setDb(({ op, table }) => {
       if (op === "select" && table === schema.subscriptions) {
-        return [paidRow("free", "trial", future)]; // free: 10 proofs
+        return [paidRow("free", "trial", future)]; // free: 50 proofs
       }
       if (op === "select" && table === schema.usageCounters) {
-        return [{ proofLimit: 10, proofUsed: 10 }];
+        return [{ proofLimit: 50, proofUsed: 50 }];
       }
       return undefined; // insert into usageCounters resolves to default
     });
@@ -181,7 +181,7 @@ describe("canUseAutomaticProof (monthly proof limit + expiry)", () => {
     const result = await subscription.canUseAutomaticProof("arisan-1");
     assert.equal(result.allowed, false);
     assert.equal(result.reason, "quota");
-    assert.equal(result.limit, 10);
+    assert.equal(result.limit, 50);
   });
 
   test("allows when under the monthly limit", async () => {
@@ -191,7 +191,7 @@ describe("canUseAutomaticProof (monthly proof limit + expiry)", () => {
         return [paidRow("free", "trial", future)];
       }
       if (op === "select" && table === schema.usageCounters) {
-        return [{ proofLimit: 10, proofUsed: 3 }];
+        return [{ proofLimit: 50, proofUsed: 3 }];
       }
       return undefined;
     });
@@ -235,7 +235,9 @@ function paidRow(planId: string, status: string, currentPeriodEnd: Date) {
     plan: {
       id: planId,
       maxMembers: { free: 5, basic: 15, pro: 30, premium: 75 }[planId] ?? 5,
-      monthlyProofLimit: { free: 10, basic: 75, pro: 150, premium: 375 }[planId] ?? 10,
+      // Free = 50/month; paid plans = unlimited (sentinel).
+      monthlyProofLimit:
+        { free: 50, basic: 1_000_000, pro: 1_000_000, premium: 1_000_000 }[planId] ?? 50,
       name: planId,
       price: 0,
     },

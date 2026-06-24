@@ -34,6 +34,15 @@ type Tables = typeof import("@/db/schema");
 let schema: Tables;
 let mod: typeof import("@/lib/whatsapp/handle-select-arisan");
 
+// These cases all re-run text-returning commands, so the reply must be a string
+// (the image-reply branch is for paket bills). Narrow it for the assertions.
+function expectText(
+  reply: Awaited<ReturnType<typeof mod.handleSelectArisanInput>>,
+): string {
+  assert.equal(typeof reply, "string", "expected a text reply");
+  return reply as string;
+}
+
 before(async () => {
   mock.module("@/db", { namedExports: { db, schema: {} } });
   mock.module("next/navigation", { namedExports: { redirect: fakeRedirect } });
@@ -70,7 +79,7 @@ function activeArisanUpdate() {
 
 describe("handleSelectArisanInput", () => {
   test("valid number sets active arisan and re-runs the command", async () => {
-    const reply = await mod.handleSelectArisanInput("u1", "2", state);
+    const reply = expectText(await mod.handleSelectArisanInput("u1", "2", state));
 
     assert.equal(activeArisanUpdate()?.set.activeArisanId, "g2");
     assert.equal(dispatch.mock.callCount(), 1);
@@ -85,13 +94,13 @@ describe("handleSelectArisanInput", () => {
   test("does not double-print the active arisan for menu replies", async () => {
     dispatch.mock.mockImplementation(async () => "Arisan aktif: RT1 (admin)\n...");
 
-    const reply = await mod.handleSelectArisanInput("u1", "1", state);
+    const reply = expectText(await mod.handleSelectArisanInput("u1", "1", state));
 
     assert.equal(reply.match(/Arisan aktif/g)?.length, 1);
   });
 
   test("out-of-range number re-prompts and does not run a command", async () => {
-    const reply = await mod.handleSelectArisanInput("u1", "9", state);
+    const reply = expectText(await mod.handleSelectArisanInput("u1", "9", state));
 
     assert.equal(dispatch.mock.callCount(), 0);
     assert.equal(activeArisanUpdate(), undefined);
@@ -99,7 +108,7 @@ describe("handleSelectArisanInput", () => {
   });
 
   test("BATAL cancels the flow", async () => {
-    const reply = await mod.handleSelectArisanInput("u1", "batal", state);
+    const reply = expectText(await mod.handleSelectArisanInput("u1", "batal", state));
 
     assert.equal(dispatch.mock.callCount(), 0);
     assert.match(reply, /Dibatalkan/);

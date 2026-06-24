@@ -10,7 +10,7 @@ import {
 } from "@/lib/whatsapp/inbound";
 import { downloadWhatsAppMedia } from "@/lib/whatsapp/media";
 import { processInboundWhatsAppText } from "@/lib/whatsapp/process-inbound";
-import { sendWhatsAppText } from "@/lib/whatsapp/send-message";
+import { sendWhatsAppReply, sendWhatsAppText } from "@/lib/whatsapp/send-message";
 
 export const runtime = "nodejs";
 // Payment-proof OCR/AI is deferred to `after()`; allow time for that background
@@ -246,8 +246,8 @@ export async function POST(request: Request) {
         }
 
         const sendResult = processed.reply
-          ? await sendWhatsAppText({
-              body: processed.reply,
+          ? await sendWhatsAppReply({
+              reply: processed.reply,
               toPhone: processed.fromPhone,
             })
           : null;

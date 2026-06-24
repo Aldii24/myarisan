@@ -49,11 +49,18 @@ export async function handleSelectArisanInput(
     command: data.command,
     userId,
   });
+  const activeLine = `✅ ${bold(`Arisan aktif: ${selected.arisanName}`)}`;
+
+  // An image reply (e.g. a paket bill with QRIS): prepend the active-arisan line
+  // to its caption so the user still sees which arisan they switched to.
+  if (typeof reply !== "string") {
+    return { ...reply, caption: compose(activeLine, reply.caption) };
+  }
 
   // If the re-run reply already names the active arisan, don't repeat it.
   if (reply.includes("Arisan aktif")) {
     return reply;
   }
 
-  return compose(`✅ ${bold(`Arisan aktif: ${selected.arisanName}`)}`, reply);
+  return compose(activeLine, reply);
 }

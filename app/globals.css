@@ -92,3 +92,20 @@ button:disabled,
   font-size: 0.8125rem;
   line-height: 1.5;
 }
+
+/* Lazy three.js hero backdrop fades in over the instant CSS gradient. */
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [style*="heroFadeIn"] {
+    animation: none !important;
+    opacity: 0.7 !important;
+  }
+}

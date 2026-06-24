@@ -11,6 +11,14 @@ import {
   type Plan,
   type Subscription,
 } from "@/db/schema";
+import { UNLIMITED_PROOF_LIMIT } from "@/lib/plan-limits";
+
+export {
+  UNLIMITED_PROOF_LIMIT,
+  formatProofLimit,
+  formatProofUsage,
+  isUnlimitedProofs,
+} from "@/lib/plan-limits";
 
 export const defaultPlanLimits = {
   free: {
@@ -18,28 +26,28 @@ export const defaultPlanLimits = {
     name: "Free",
     price: 0,
     maxMembers: 5,
-    monthlyProofLimit: 10,
+    monthlyProofLimit: 50,
   },
   basic: {
     id: "basic",
     name: "Basic",
     price: 25000,
     maxMembers: 15,
-    monthlyProofLimit: 75,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
   },
   pro: {
     id: "pro",
     name: "Pro",
     price: 50000,
     maxMembers: 30,
-    monthlyProofLimit: 150,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
   },
   premium: {
     id: "premium",
     name: "Premium",
     price: 100000,
     maxMembers: 75,
-    monthlyProofLimit: 375,
+    monthlyProofLimit: UNLIMITED_PROOF_LIMIT,
   },
 } satisfies Record<string, Pick<Plan, "id" | "maxMembers" | "monthlyProofLimit" | "name" | "price">>;
 

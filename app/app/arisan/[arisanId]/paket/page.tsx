@@ -14,7 +14,12 @@ import { db } from "@/db";
 import { arisanGroups } from "@/db/schema";
 import { formatDateTimeLabel, formatRupiah } from "@/lib/arisan";
 import { requireArisanAdmin } from "@/lib/auth/user";
-import { getPackageStatus, getPaidPlans } from "@/lib/subscription";
+import {
+  formatProofLimit,
+  formatProofUsage,
+  getPackageStatus,
+  getPaidPlans,
+} from "@/lib/subscription";
 
 import { choosePackageAction } from "./actions";
 
@@ -119,7 +124,10 @@ export default async function PaketPage({
         <MetricCard
           accent="amber"
           label="Baca Bukti"
-          value={`${packageStatus.proofUsed}/${packageStatus.proofLimit}`}
+          value={formatProofUsage(
+            packageStatus.proofUsed,
+            packageStatus.proofLimit,
+          )}
         />
       </div>
 
@@ -140,7 +148,10 @@ export default async function PaketPage({
                 Baca Bukti
               </p>
               <p className="mt-2 text-2xl font-semibold text-zinc-950">
-                {packageStatus.proofUsed}/{packageStatus.proofLimit}
+                {formatProofUsage(
+                  packageStatus.proofUsed,
+                  packageStatus.proofLimit,
+                )}
               </p>
             </div>
           </div>
@@ -173,7 +184,8 @@ export default async function PaketPage({
                         {isHighlighted ? <StatusBadge status="Rekomendasi" /> : null}
                       </div>
                       <p className="mt-1 text-sm leading-6 text-zinc-600">
-                        {plan.maxMembers} anggota, {plan.monthlyProofLimit} bukti/bulan
+                        {plan.maxMembers} anggota,{" "}
+                        {formatProofLimit(plan.monthlyProofLimit)} bukti/bulan
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-zinc-950">

@@ -35,6 +35,9 @@ before(async () => {
   mock.module("@/lib/subscription", {
     namedExports: { getPlanById: async () => plan },
   });
+  mock.module("@/lib/whatsapp/notify-owner", {
+    namedExports: { notifyOwnerInvoiceProofUploaded: async () => {} },
+  });
   schema = await import("@/db/schema");
   pkg = await import("@/lib/payments/package-invoice");
 });

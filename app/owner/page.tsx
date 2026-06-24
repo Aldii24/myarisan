@@ -14,7 +14,6 @@ import { db } from "@/db";
 import { arisanGroups, invoices, plans, users } from "@/db/schema";
 import { formatDateTimeLabel, formatRupiah } from "@/lib/arisan";
 import { requireOwnerUser } from "@/lib/owner";
-import { getPublicStorageUrl } from "@/lib/storage";
 
 import { logoutAction } from "../app/actions";
 import { approveInvoiceAction, rejectInvoiceAction } from "./actions";
@@ -87,7 +86,9 @@ function InvoiceSection({
       ) : (
         <div className="mt-5 grid gap-3 xl:grid-cols-2">
           {invoices.map((invoice) => {
-            const proofUrl = getPublicStorageUrl(invoice.proofImageUrl);
+            const proofUrl = invoice.proofImageUrl
+              ? `/api/files/invoice-proof/${invoice.id}`
+              : null;
 
             return (
               <article

@@ -7,6 +7,7 @@ import { invoices } from "@/db/schema";
 import { createAuditLog } from "@/lib/audit";
 import { saveInvoiceProofFile, validatePaymentProofFile } from "@/lib/storage";
 import { getPlanById } from "@/lib/subscription";
+import { notifyOwnerInvoiceProofUploaded } from "@/lib/whatsapp/notify-owner";
 
 // Shared manual-QRIS package invoice core, used by both the dashboard Paket
 // actions and the WhatsApp `paket` flow. Keeps invoice creation and proof
@@ -163,6 +164,14 @@ export async function attachInvoiceProof(input: {
     entityId: input.invoiceId,
     entityType: "invoice",
   });
+
+  // Let the owner know there's a new proof to verify. Best-effort — a notify
+  // failure must not fail the upload the admin just completed.
+  try {
+    await notifyOwnerInvoiceProofUploaded(input.invoiceId);
+  } catch (error) {
+    console.error("Failed to notify owner of new package proof", error);
+  }
 
   return {
     invoiceId: input.invoiceId,

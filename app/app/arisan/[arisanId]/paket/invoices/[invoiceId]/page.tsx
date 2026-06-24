@@ -13,7 +13,6 @@ import { arisanGroups, invoices, plans } from "@/db/schema";
 import { formatDateTimeLabel, formatRupiah } from "@/lib/arisan";
 import { requireArisanAdmin } from "@/lib/auth/user";
 import { qrisImageSrc } from "@/lib/payments/qris";
-import { getPublicStorageUrl } from "@/lib/storage";
 
 import { InvoiceProofForm } from "../../invoice-proof-form";
 
@@ -96,7 +95,9 @@ export default async function PackageInvoicePage({
 
   const qrisImageUrl = qrisImageSrc();
   const canUpload = invoice.status === "pending" || invoice.status === "rejected";
-  const proofImageUrl = getPublicStorageUrl(invoice.proofImageUrl);
+  const proofImageUrl = invoice.proofImageUrl
+    ? `/api/files/invoice-proof/${invoice.id}`
+    : null;
 
   return (
     <>

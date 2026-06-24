@@ -18,6 +18,7 @@ import {
   requireUser,
 } from "@/lib/auth/user";
 import { addDays, getCurrentUsageMonth } from "@/lib/subscription";
+import { notifyAdminInvoiceDecision } from "@/lib/whatsapp/notify-admin";
 
 export function getOwnerPhones() {
   const ownerPhone = process.env.OWNER_PHONE?.trim();
@@ -258,6 +259,20 @@ export async function approvePackageInvoice(input: {
     entityType: "subscription",
   });
 
+  // Let the buyer know their package is active. Best-effort — a notify failure
+  // must not undo a completed approval.
+  try {
+    await notifyAdminInvoiceDecision({
+      activeUntil: nextPeriodEnd,
+      adminUserId: invoice.adminUserId,
+      approved: true,
+      arisanName: row.arisanName,
+      planName: row.planName,
+    });
+  } catch (error) {
+    console.error("Failed to notify admin of invoice approval", error);
+  }
+
   return {
     adminUserId: invoice.adminUserId,
     amount: invoice.amount,
@@ -322,6 +337,19 @@ export async function rejectPackageInvoice(input: {
     entityId: invoice.id,
     entityType: "invoice",
   });
+
+  // Tell the buyer their proof was rejected so they can re-upload.
+  try {
+    await notifyAdminInvoiceDecision({
+      adminUserId: invoice.adminUserId,
+      approved: false,
+      arisanName: row.arisanName,
+      planName: row.planName,
+      reason: input.reason,
+    });
+  } catch (error) {
+    console.error("Failed to notify admin of invoice rejection", error);
+  }
 
   return {
     adminUserId: invoice.adminUserId,

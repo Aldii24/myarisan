@@ -17,6 +17,7 @@ import { requireOwnerUser } from "@/lib/owner";
 
 import { logoutAction } from "../app/actions";
 import { approveInvoiceAction, rejectInvoiceAction } from "./actions";
+import { ProofPreview } from "./proof-preview";
 
 type OwnerInvoice = Awaited<ReturnType<typeof getOwnerInvoices>>[number];
 
@@ -97,10 +98,8 @@ function InvoiceSection({
               >
                 <div className="flex gap-4">
                   {proofUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <ProofPreview
                       alt={`Bukti paket ${invoice.arisanName}`}
-                      className="h-24 w-24 shrink-0 rounded-2xl border border-white/70 object-cover shadow-sm"
                       src={proofUrl}
                     />
                   ) : (

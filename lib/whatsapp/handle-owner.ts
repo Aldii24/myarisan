@@ -15,7 +15,6 @@ import {
   type PendingActionState,
 } from "./conversation-state";
 import { bold, compose, field, footer, header, italic } from "./format";
-import { sendWhatsAppText } from "./send-message";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai"]);
 
@@ -72,31 +71,6 @@ function selectPrompt(items: OwnerReviewItem[], prefix?: string) {
     renderList(items),
     footer("Balas NOMOR untuk memproses, atau SELESAI untuk berhenti."),
   );
-}
-
-// Sends the admin a heads-up about the owner's decision, but only inside the
-// 24h service window (the send guard also enforces this and logs a skip).
-async function notifyAdmin(input: {
-  adminPhone: string;
-  arisanName: string;
-  approved: boolean;
-  planName: string;
-  reason?: string | null;
-}) {
-  const body = input.approved
-    ? compose(
-        header("🎉", "Paket Aktif", input.arisanName),
-        `Paket ${bold(input.planName)} sudah aktif. Terima kasih sudah membayar! 🙏`,
-      )
-    : compose(
-        header("⚠️", "Bukti Paket Ditolak", input.arisanName),
-        `Maaf, bukti paket ${bold(input.planName)} ditolak.${
-          input.reason ? `\nAlasan: ${input.reason}` : ""
-        }`,
-        footer("Silakan upload ulang lewat PAKET."),
-      );
-
-  await sendWhatsAppText({ body, toPhone: input.adminPhone });
 }
 
 // Entry point from the owner `paket`/`owner` command. Owner-only; lists invoices
@@ -188,13 +162,6 @@ export async function handleOwnerInput(
       return result.error;
     }
 
-    await notifyAdmin({
-      adminPhone: selected.adminPhone,
-      approved: true,
-      arisanName: result.arisanName,
-      planName: result.planName,
-    });
-
     decisionText = `✅ ${bold(selected.arisanName)} — paket ${
       result.planName
     } aktif sampai ${formatDateTimeLabel(result.currentPeriodEnd)}.`;
@@ -210,14 +177,6 @@ export async function handleOwnerInput(
       await clearPendingAction(userId);
       return result.error;
     }
-
-    await notifyAdmin({
-      adminPhone: selected.adminPhone,
-      approved: false,
-      arisanName: result.arisanName,
-      planName: result.planName,
-      reason,
-    });
 
     decisionText = `🚫 ${bold(selected.arisanName)} — bukti paket ditolak.`;
   } else {

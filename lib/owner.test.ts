@@ -22,6 +22,9 @@ before(async () => {
   mock.module("@/lib/audit", {
     namedExports: { createAuditLog: async () => {} },
   });
+  mock.module("@/lib/whatsapp/notify-admin", {
+    namedExports: { notifyAdminInvoiceDecision: async () => {} },
+  });
   schema = await import("@/db/schema");
   owner = await import("@/lib/owner");
 });

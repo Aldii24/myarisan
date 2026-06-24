@@ -39,7 +39,7 @@ export function ProofPreview({ alt, src }: { alt: string; src: string }) {
     <>
       <button
         aria-label="Lihat bukti pembayaran"
-        className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-white/70 shadow-sm"
+        className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-border shadow-sm"
         onClick={() => setOpen(true)}
         type="button"
       >

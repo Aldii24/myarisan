@@ -72,11 +72,11 @@ export default async function ManualPaymentPage({
       />
 
       {expired ? (
-        <div className="rounded-3xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-red-900">
+        <div className="rounded-3xl border border-danger-border bg-danger-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-danger-foreground">
             Paket arisan sudah habis.
           </p>
-          <p className="mt-1 text-sm leading-6 text-red-800">
+          <p className="mt-1 text-sm leading-6 text-danger-foreground">
             Mencatat pembayaran baru dikunci sampai paket diperpanjang. Data lama
             tetap bisa dilihat.
           </p>
@@ -88,11 +88,11 @@ export default async function ManualPaymentPage({
           </ButtonLink>
         </div>
       ) : quotaExhausted ? (
-        <div className="rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-amber-950">
+        <div className="rounded-3xl border border-warning-border bg-warning-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-warning-foreground">
             Kuota baca bukti otomatis bulan ini habis.
           </p>
-          <p className="mt-1 text-sm leading-6 text-amber-900">
+          <p className="mt-1 text-sm leading-6 text-warning-foreground">
             Pembayaran tetap bisa dicatat manual dari halaman ini. Upgrade paket
             untuk menambah kuota bukti otomatis.
           </p>
@@ -121,11 +121,11 @@ export default async function ManualPaymentPage({
           </EmptyState>
         ) : (
           <>
-            <div className="mb-5 rounded-2xl border border-white/60 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="mb-5 rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Periode aktif
               </p>
-              <p className="mt-1 font-semibold text-zinc-950">
+              <p className="mt-1 font-semibold text-foreground">
                 {dashboard.activePeriod.name} · Setoran{" "}
                 {formatRupiah(dashboard.group.amountPerPeriod)}
               </p>

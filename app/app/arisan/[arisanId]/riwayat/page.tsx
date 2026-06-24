@@ -62,7 +62,7 @@ export default async function MemberPaymentHistoryPage({
       </div>
 
       <GlassPanel className="p-5">
-        <h2 className="text-lg font-semibold text-zinc-950">Daftar Setoran</h2>
+        <h2 className="text-lg font-semibold text-foreground">Daftar Setoran</h2>
         {data.payments.length === 0 ? (
           <div className="mt-4">
             <EmptyState title="Belum ada setoran">
@@ -73,7 +73,7 @@ export default async function MemberPaymentHistoryPage({
           <div className="mt-5 grid gap-3 xl:grid-cols-2">
             {data.payments.map((payment) => (
               <div
-                className="rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm backdrop-blur"
+                className="rounded-3xl border border-border bg-card p-4 shadow-sm backdrop-blur"
                 key={payment.id}
               >
                 <div className="flex gap-4">
@@ -81,34 +81,34 @@ export default async function MemberPaymentHistoryPage({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt={`Bukti bayar ${payment.periodName}`}
-                      className="h-24 w-24 shrink-0 rounded-2xl border border-white/70 object-cover shadow-sm"
+                      className="h-24 w-24 shrink-0 rounded-2xl border border-border object-cover shadow-sm"
                       src={`/api/files/payment-proof/${payment.id}`}
                     />
                   ) : (
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white/40 text-xs font-semibold text-zinc-500">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-xs font-semibold text-muted-foreground">
                       Bukti
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
-                      <p className="font-semibold text-zinc-950">
+                      <p className="font-semibold text-foreground">
                         {payment.periodName}
                       </p>
                       <StatusBadge status={paymentStatusLabel(payment.status)} />
                     </div>
-                    <p className="mt-3 text-lg font-semibold text-zinc-950">
+                    <p className="mt-3 text-lg font-semibold text-foreground">
                       {formatRupiah(payment.amount ?? 0)}
                     </p>
                     {payment.note ? (
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600">
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {payment.note}
                       </p>
                     ) : null}
-                    <p className="mt-3 text-xs font-medium text-zinc-500">
+                    <p className="mt-3 text-xs font-medium text-muted-foreground">
                       Dikirim {formatDateTimeLabel(payment.createdAt)}
                     </p>
                     {payment.confirmedAt ? (
-                      <p className="mt-1 text-xs font-medium text-emerald-700">
+                      <p className="mt-1 text-xs font-medium text-primary">
                         Diterima {formatDateTimeLabel(payment.confirmedAt)}
                       </p>
                     ) : null}

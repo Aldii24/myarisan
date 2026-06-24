@@ -77,11 +77,11 @@ function ReadTile({
   value: React.ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+    <div className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
-      <p className="mt-2 font-semibold text-zinc-950">{value}</p>
+      <p className="mt-2 font-semibold text-foreground">{value}</p>
     </div>
   );
 }
@@ -147,11 +147,11 @@ export default async function PaymentDetailPage({
         title={payment.memberName ?? "Anggota"}
       />
       {expired || gate === "expired" ? (
-        <div className="rounded-3xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-red-900">
+        <div className="rounded-3xl border border-danger-border bg-danger-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-danger-foreground">
             Paket arisan sudah habis.
           </p>
-          <p className="mt-1 text-sm leading-6 text-red-800">
+          <p className="mt-1 text-sm leading-6 text-danger-foreground">
             Konfirmasi pembayaran baru dikunci sampai paket diperpanjang. Data
             lama tetap bisa dilihat.
           </p>
@@ -161,17 +161,17 @@ export default async function PaymentDetailPage({
         </div>
       ) : null}
       {payment.status === "duplicate_check" ? (
-        <div className="rounded-3xl border border-orange-200/80 bg-orange-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-orange-950">
+        <div className="rounded-3xl border border-warning-border bg-warning-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-warning-foreground">
             Bukti ini mirip dengan pembayaran yang sudah pernah dikirim.
           </p>
-          <p className="mt-1 text-sm leading-6 text-orange-900">
+          <p className="mt-1 text-sm leading-6 text-warning-foreground">
             Status: perlu dicek admin. Pastikan ini bukan bukti ganda sebelum
             menerima.
           </p>
           {payment.duplicateOfPaymentId ? (
             <Link
-              className="mt-2 inline-flex text-sm font-semibold text-orange-950 underline underline-offset-2"
+              className="mt-2 inline-flex text-sm font-semibold text-warning-foreground underline underline-offset-2"
               href={`/app/arisan/${arisanId}/payments/${payment.duplicateOfPaymentId}`}
             >
               Lihat bukti yang mirip
@@ -206,7 +206,7 @@ export default async function PaymentDetailPage({
               src={`/api/files/payment-proof/${payment.id}`}
             />
           ) : (
-            <p className="rounded-3xl border border-dashed border-zinc-300 bg-white/35 p-6 text-sm text-zinc-600">
+            <p className="rounded-3xl border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">
               Tidak ada gambar bukti.
             </p>
           )}
@@ -214,7 +214,7 @@ export default async function PaymentDetailPage({
 
         <div className="space-y-5">
           <GlassPanel>
-            <h2 className="text-lg font-semibold text-zinc-950">Rincian Bukti</h2>
+            <h2 className="text-lg font-semibold text-foreground">Rincian Bukti</h2>
             <div className="mt-4 grid gap-3">
               <ReadTile
                 label="Status"
@@ -228,7 +228,7 @@ export default async function PaymentDetailPage({
                 <ReadTile
                   label="Catatan"
                   value={
-                    <span className="whitespace-pre-wrap text-sm leading-6 text-zinc-700">
+                    <span className="whitespace-pre-wrap text-sm leading-6 text-foreground">
                       {payment.note}
                     </span>
                   }
@@ -238,10 +238,10 @@ export default async function PaymentDetailPage({
           </GlassPanel>
 
           <GlassPanel>
-            <h2 className="text-lg font-semibold text-zinc-950">
+            <h2 className="text-lg font-semibold text-foreground">
               Baca Bukti Otomatis
             </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Hasil ini hanya bantu admin mengecek. Pembayaran tetap harus
               diterima manual.
             </p>
@@ -293,11 +293,11 @@ export default async function PaymentDetailPage({
                   />
                 </div>
                 {warnings.length > 0 ? (
-                  <div className="rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 sm:col-span-2">
-                    <p className="text-sm font-semibold text-amber-950">
+                  <div className="rounded-3xl border border-warning-border bg-warning-surface p-4 sm:col-span-2">
+                    <p className="text-sm font-semibold text-warning-foreground">
                       Catatan/peringatan
                     </p>
-                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-amber-900">
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-warning-foreground">
                       {warnings.map((warning) => (
                         <li key={warning}>{warningLabel(warning)}</li>
                       ))}
@@ -306,32 +306,32 @@ export default async function PaymentDetailPage({
                 ) : null}
               </div>
             ) : (
-              <p className="mt-4 rounded-3xl border border-dashed border-zinc-300 bg-white/35 p-4 text-sm leading-6 text-zinc-600">
+              <p className="mt-4 rounded-3xl border border-dashed border-border bg-card p-4 text-sm leading-6 text-muted-foreground">
                 Belum ada hasil baca otomatis.
               </p>
             )}
-            <details className="mt-4 rounded-3xl border border-white/60 bg-white/45 p-4">
-              <summary className="cursor-pointer text-sm font-semibold text-zinc-800">
+            <details className="mt-4 rounded-3xl border border-border bg-card p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-foreground">
                 Bacaan lengkap
               </summary>
-              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-600">
+              <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
                 {payment.ocrText?.trim() || "Tidak ada teks terbaca."}
               </p>
             </details>
           </GlassPanel>
 
           <GlassPanel variant="elevated">
-            <h2 className="text-lg font-semibold text-zinc-950">Aksi Admin</h2>
+            <h2 className="text-lg font-semibold text-foreground">Aksi Admin</h2>
             <form
               action={confirmPaymentAction.bind(null, arisanId, paymentId)}
               className="mt-4 space-y-3"
             >
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-800" htmlFor="amount">
+                <label className="text-sm font-semibold text-foreground" htmlFor="amount">
                   Edit nominal jika perlu
                 </label>
                 <input
-                  className="h-12 w-full rounded-2xl border border-white/70 bg-white/70 px-4 text-base text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                  className="h-12 w-full rounded-2xl border border-border bg-card px-4 text-base text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
                   defaultValue={payment.amount ?? 0}
                   id="amount"
                   inputMode="numeric"
@@ -347,7 +347,7 @@ export default async function PaymentDetailPage({
                 Terima
               </button>
               {expired ? (
-                <p className="text-xs leading-5 text-red-700">
+                <p className="text-xs leading-5 text-danger-foreground">
                   Perpanjang paket dulu untuk konfirmasi pembayaran.
                 </p>
               ) : null}

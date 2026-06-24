@@ -54,7 +54,7 @@ export function GiliranAdmin({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-muted-foreground">
           Atur urutan giliran, acak, dan tentukan pemenang bulan ini.
         </p>
         <button
@@ -69,12 +69,12 @@ export function GiliranAdmin({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-lg border border-success-border bg-success-surface px-3 py-2 text-sm text-success-foreground">
           {state.success}
         </p>
       ) : null}
@@ -83,20 +83,20 @@ export function GiliranAdmin({
         {members.map((member, index) => (
           <li
             className={cn(
-              "flex items-center gap-3 rounded-3xl border border-white/55 bg-white/45 p-3 shadow-sm",
-              member.isCurrentDraw && "border-emerald-300 bg-emerald-50/80",
+              "flex items-center gap-3 rounded-3xl border border-border bg-card p-3 shadow-sm",
+              member.isCurrentDraw && "border-success-border bg-success-surface",
             )}
             key={member.id}
           >
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-zinc-950">
+              <p className="truncate font-semibold text-foreground">
                 {member.displayName}
               </p>
               {member.isCurrentDraw ? (
-                <p className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                <p className="flex items-center gap-1 text-xs font-medium text-primary">
                   <Crown className="size-3" />
                   Giliran bulan ini
                 </p>
@@ -140,7 +140,7 @@ export function GiliranAdmin({
       </ol>
 
       {!hasActivePeriod ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-lg border border-warning-border bg-warning-surface px-3 py-2 text-sm text-warning-foreground">
           Belum ada periode aktif. Giliran bulan ini bisa diatur setelah periode
           aktif tersedia.
         </p>

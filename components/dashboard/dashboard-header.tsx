@@ -14,15 +14,15 @@ export function DashboardHeader({
   title: string;
 }) {
   return (
-    <Card className="border-white/90 bg-white/88 shadow-sm backdrop-blur">
+    <Card className="shadow-sm">
       <CardHeader className="gap-2 p-4 md:p-6">
         {badges ? <div className="flex flex-wrap gap-2">{badges}</div> : null}
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
             {eyebrow}
           </p>
         ) : null}
-        <CardTitle className="text-xl font-semibold tracking-tight text-zinc-950 md:text-3xl">
+        <CardTitle className="text-xl font-semibold tracking-tight text-foreground md:text-3xl">
           {title}
         </CardTitle>
         {subtitle ? (

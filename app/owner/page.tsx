@@ -77,11 +77,11 @@ function InvoiceSection({
   return (
     <GlassPanel>
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <MetricCard accent={accent} label="Jumlah" value={invoices.length} />
       </div>
       {invoices.length === 0 ? (
-        <p className="mt-4 rounded-3xl border border-dashed border-zinc-300 bg-white/35 p-4 text-sm leading-6 text-zinc-600">
+        <p className="mt-4 rounded-3xl border border-dashed border-border bg-muted p-4 text-sm leading-6 text-muted-foreground">
           {emptyText}
         </p>
       ) : (
@@ -93,7 +93,7 @@ function InvoiceSection({
 
             return (
               <article
-                className="rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm backdrop-blur"
+                className="rounded-3xl border border-border bg-card p-4 shadow-sm backdrop-blur"
                 key={invoice.id}
               >
                 <div className="flex gap-4">
@@ -103,23 +103,23 @@ function InvoiceSection({
                       src={proofUrl}
                     />
                   ) : (
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white/35 text-xs font-semibold text-zinc-500">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-xs font-semibold text-muted-foreground">
                       Bukti
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-zinc-950">
+                        <p className="font-semibold text-foreground">
                           {invoice.arisanName}
                         </p>
-                        <p className="mt-1 text-sm text-zinc-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {invoice.planName}
                         </p>
                       </div>
                       <StatusBadge status={invoiceStatusLabel(invoice.status)} />
                     </div>
-                    <div className="mt-3 grid gap-1 text-sm leading-6 text-zinc-600">
+                    <div className="mt-3 grid gap-1 text-sm leading-6 text-muted-foreground">
                       <p>ID: {invoice.id}</p>
                       <p>
                         Admin: {invoice.adminName ?? "Admin"} ({invoice.adminPhone})
@@ -161,10 +161,10 @@ export default async function OwnerPage() {
         <div className="mx-auto max-w-xl">
           <GlassPanel variant="elevated">
             <BrandLogo />
-            <h1 className="mt-6 text-3xl font-semibold tracking-tight text-zinc-950">
+            <h1 className="mt-6 text-3xl font-semibold tracking-tight text-foreground">
               Owner belum diatur
             </h1>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">{owner.error}</p>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">{owner.error}</p>
             <ButtonLink className="mt-5" href="/app" variant="primary">
               Kembali
             </ButtonLink>
@@ -189,13 +189,13 @@ export default async function OwnerPage() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <BrandLogo />
-              <p className="mt-6 text-sm font-semibold tracking-wide text-emerald-700">
+              <p className="mt-6 text-sm font-semibold tracking-wide text-primary">
                 Owner
               </p>
-              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-950 lg:text-4xl">
+              <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground lg:text-4xl">
                 Paket MyArisan
               </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Login sebagai {owner.user.phone}. Cek bukti paket dan aktifkan
                 paket arisan dari sini.
               </p>

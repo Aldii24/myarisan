@@ -29,10 +29,10 @@ export default async function JoinPage({
             <div className="mx-auto w-fit">
               <BrandLogo />
             </div>
-            <h1 className="mt-8 text-3xl font-semibold text-zinc-950">
+            <h1 className="mt-8 text-3xl font-semibold text-foreground">
               Kode arisan tidak ditemukan.
             </h1>
-            <p className="mt-3 text-sm leading-6 text-zinc-600">
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Cek lagi kode dari admin arisan, lalu buka ulang link daftar.
             </p>
           </GlassPanel>
@@ -49,13 +49,13 @@ export default async function JoinPage({
         <div className="space-y-5">
           <BrandLogo />
           <GlassPanel className="p-6 lg:p-8" variant="elevated">
-            <p className="text-sm font-semibold tracking-wide text-emerald-700">
+            <p className="text-sm font-semibold tracking-wide text-primary">
               Daftar MyArisan
             </p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight text-zinc-950">
+            <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight text-foreground">
               Masuk ke {group.name}
             </h1>
-            <p className="mt-4 text-sm leading-6 text-zinc-600">
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">
               Pilih nama kamu, isi nomor WhatsApp, lalu buat PIN 4 angka. Data
               pembayaran tetap dicek admin arisan.
             </p>
@@ -68,11 +68,11 @@ export default async function JoinPage({
               <MetricCard accent="neutral" label="Periode" value={periodLabel(group.periodType)} />
             </div>
             {group.bankAccountText ? (
-              <div className="mt-4 rounded-3xl border border-white/50 bg-white/45 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <div className="mt-4 rounded-3xl border border-border bg-card p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Rekening admin
                 </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-800">
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-foreground">
                   {group.bankAccountText}
                 </p>
               </div>

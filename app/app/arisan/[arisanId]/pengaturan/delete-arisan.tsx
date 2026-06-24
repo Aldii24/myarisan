@@ -17,7 +17,7 @@ import { deleteArisanAction, type DeleteArisanState } from "./actions";
 
 const initialState: DeleteArisanState = {};
 const inputClass =
-  "h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-red-500 focus:ring-4 focus:ring-red-100";
+  "h-12 w-full rounded-2xl border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 
 export function DeleteArisan({
   arisanId,
@@ -38,9 +38,9 @@ export function DeleteArisan({
     arisanName.trim().toLocaleLowerCase("id-ID");
 
   return (
-    <div className="mt-6 rounded-3xl border border-red-200 bg-red-50/60 p-5">
-      <h2 className="text-base font-semibold text-red-800">Zona Berbahaya</h2>
-      <p className="mt-1 text-sm text-red-700">
+    <div className="mt-6 rounded-3xl border border-danger-border bg-danger-surface p-5">
+      <h2 className="text-base font-semibold text-danger-foreground">Zona Berbahaya</h2>
+      <p className="mt-1 text-sm text-danger-foreground">
         Menghapus arisan bersifat permanen. Semua anggota, periode, dan riwayat
         pembayaran akan hilang dan tidak bisa dikembalikan.
       </p>
@@ -67,7 +67,7 @@ export function DeleteArisan({
             <DialogTitle>Hapus arisan {arisanName}?</DialogTitle>
             <DialogDescription>
               Tindakan ini permanen. Untuk konfirmasi, ketik nama arisan persis:{" "}
-              <span className="font-semibold text-zinc-900">{arisanName}</span>
+              <span className="font-semibold text-foreground">{arisanName}</span>
             </DialogDescription>
           </DialogHeader>
 
@@ -82,7 +82,7 @@ export function DeleteArisan({
             />
 
             {state.error ? (
-              <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+              <p className="rounded-2xl border border-danger-border bg-danger-surface px-4 py-3 text-sm font-semibold text-danger-foreground">
                 {state.error}
               </p>
             ) : null}

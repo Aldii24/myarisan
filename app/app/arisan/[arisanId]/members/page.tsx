@@ -54,8 +54,8 @@ export default async function MembersPage({
       />
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
         <GlassPanel className="p-5" variant="elevated">
-          <h2 className="text-xl font-semibold text-zinc-950">Tambah anggota</h2>
-          <p className="mt-2 text-sm leading-6 text-zinc-600">
+          <h2 className="text-xl font-semibold text-foreground">Tambah anggota</h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Tulis nama anggota satu per baris. Mereka bisa daftar sendiri lewat
             kode join.
           </p>
@@ -67,8 +67,8 @@ export default async function MembersPage({
         <GlassPanel className="p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-zinc-950">Daftar anggota</h2>
-              <p className="mt-1 text-sm text-zinc-600">
+              <h2 className="text-xl font-semibold text-foreground">Daftar anggota</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
                 {memberRows.length} anggota terdata
               </p>
             </div>

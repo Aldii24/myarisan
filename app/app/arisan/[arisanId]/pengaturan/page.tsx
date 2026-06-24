@@ -80,9 +80,9 @@ async function ActivePackageNotice({ arisanId }: { arisanId: string }) {
   const status = await getPackageStatus(arisanId);
 
   return (
-    <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50/70 p-5">
-      <h2 className="text-base font-semibold text-amber-900">Paket Masih Aktif</h2>
-      <p className="mt-1 text-sm text-amber-800">
+    <div className="mt-6 rounded-3xl border border-warning-border bg-warning-surface p-5">
+      <h2 className="text-base font-semibold text-warning-foreground">Paket Masih Aktif</h2>
+      <p className="mt-1 text-sm text-warning-foreground">
         Arisan ini masih punya paket aktif sampai{" "}
         <span className="font-semibold">
           {formatDateTimeLabel(status.activeUntil)}

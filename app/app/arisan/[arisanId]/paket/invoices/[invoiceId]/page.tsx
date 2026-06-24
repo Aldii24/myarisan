@@ -121,22 +121,22 @@ export default async function PackageInvoicePage({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
         <GlassPanel variant="elevated">
-          <h2 className="text-lg font-semibold text-zinc-950">QRIS MyArisan</h2>
+          <h2 className="text-lg font-semibold text-foreground">QRIS MyArisan</h2>
           {qrisImageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               alt="QRIS MyArisan"
-              className="mt-4 w-full rounded-[1.25rem] border border-white/70 bg-white/45 object-contain p-3 shadow-sm"
+              className="mt-4 w-full rounded-[1.25rem] border border-border bg-card object-contain p-3 shadow-sm"
               src={qrisImageUrl}
             />
           ) : (
-            <p className="mt-4 rounded-3xl border border-dashed border-zinc-300 bg-white/35 p-4 text-sm leading-6 text-zinc-600">
+            <p className="mt-4 rounded-3xl border border-dashed border-border bg-card p-4 text-sm leading-6 text-muted-foreground">
               QRIS belum diatur. Hubungi owner MyArisan.
             </p>
           )}
-          <div className="mt-4 rounded-3xl border border-white/60 bg-white/45 p-4">
-            <p className="text-sm font-semibold text-zinc-950">Instruksi</p>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
+          <div className="mt-4 rounded-3xl border border-border bg-card p-4">
+            <p className="text-sm font-semibold text-foreground">Instruksi</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Bayar sesuai nominal, lalu upload bukti pembayaran paket. Paket
               aktif setelah dicek owner MyArisan.
             </p>
@@ -144,36 +144,36 @@ export default async function PackageInvoicePage({
         </GlassPanel>
 
         <GlassPanel>
-          <h2 className="text-lg font-semibold text-zinc-950">
+          <h2 className="text-lg font-semibold text-foreground">
             Bukti Pembayaran Paket
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-3xl border border-white/60 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="rounded-3xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Dibuat
               </p>
-              <p className="mt-2 font-semibold text-zinc-950">
+              <p className="mt-2 font-semibold text-foreground">
                 {formatDateTimeLabel(invoice.createdAt)}
               </p>
             </div>
-            <div className="rounded-3xl border border-white/60 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="rounded-3xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Aktif
               </p>
-              <p className="mt-2 font-semibold text-zinc-950">
+              <p className="mt-2 font-semibold text-foreground">
                 {formatDateTimeLabel(invoice.paidAt)}
               </p>
             </div>
           </div>
 
           {invoice.status === "pending_verification" ? (
-            <p className="mt-4 rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 text-sm font-semibold leading-6 text-amber-900">
+            <p className="mt-4 rounded-3xl border border-warning-border bg-warning-surface p-4 text-sm font-semibold leading-6 text-warning-foreground">
               Bukti pembayaran paket berhasil dikirim. Paket akan aktif setelah
               dicek admin MyArisan.
             </p>
           ) : null}
           {invoice.status === "paid" ? (
-            <p className="mt-4 rounded-3xl border border-emerald-200/80 bg-emerald-50/90 p-4 text-sm font-semibold leading-6 text-emerald-900">
+            <p className="mt-4 rounded-3xl border border-success-border bg-success-surface p-4 text-sm font-semibold leading-6 text-success-foreground">
               Paket sudah aktif sejak {formatDateTimeLabel(invoice.paidAt)}.
             </p>
           ) : null}
@@ -186,11 +186,11 @@ export default async function PackageInvoicePage({
 
           {proofImageUrl ? (
             <div className="mt-5">
-              <p className="text-sm font-semibold text-zinc-800">Bukti terkirim</p>
+              <p className="text-sm font-semibold text-foreground">Bukti terkirim</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt="Bukti pembayaran paket"
-                className="mt-3 max-h-[420px] w-full rounded-[1.25rem] border border-white/70 object-contain"
+                className="mt-3 max-h-[420px] w-full rounded-[1.25rem] border border-border object-contain"
                 src={proofImageUrl}
               />
             </div>

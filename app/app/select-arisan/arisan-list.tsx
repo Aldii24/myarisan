@@ -53,10 +53,10 @@ export function ArisanList({ items }: { items: ArisanListItem[] }) {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative w-full md:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-emerald-700" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-primary" />
           <Input
             aria-label="Cari arisan"
-            className="h-11 rounded-2xl border-white/60 bg-white/70 pl-10 text-base shadow-sm backdrop-blur md:text-sm"
+            className="h-11 rounded-2xl border-border bg-card pl-10 text-base shadow-sm backdrop-blur md:text-sm"
             inputMode="search"
             onChange={(event) => {
               setQuery(event.target.value);
@@ -74,8 +74,8 @@ export function ArisanList({ items }: { items: ArisanListItem[] }) {
               className={cn(
                 "inline-flex min-h-11 items-center justify-center rounded-2xl border px-4 text-sm font-semibold shadow-sm backdrop-blur transition",
                 role === filter.value
-                  ? "border-emerald-200 bg-emerald-50/90 text-emerald-900"
-                  : "border-white/55 bg-white/45 text-zinc-700 hover:bg-white/68",
+                  ? "border-success-border bg-success-surface text-success-foreground"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted",
               )}
               key={filter.value}
               onClick={() => {
@@ -91,11 +91,11 @@ export function ArisanList({ items }: { items: ArisanListItem[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-[1.5rem] border border-white/55 bg-white/45 p-8 text-center shadow-sm backdrop-blur">
-          <p className="text-sm font-semibold text-zinc-800">
+        <div className="rounded-[1.5rem] border border-border bg-card p-8 text-center shadow-sm backdrop-blur">
+          <p className="text-sm font-semibold text-foreground">
             Arisan tidak ditemukan.
           </p>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Coba ubah kata kunci atau filter.
           </p>
         </div>
@@ -103,22 +103,22 @@ export function ArisanList({ items }: { items: ArisanListItem[] }) {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {pageItems.map((item) => (
             <Link
-              className="group rounded-[1.5rem] border border-white/55 bg-white/50 p-5 shadow-[0_18px_60px_rgba(67,48,35,0.1)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-white/68"
+              className="group rounded-[1.5rem] border border-border bg-card p-5 shadow-md backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-muted"
               href={`/app/arisan/${item.arisanGroupId}`}
               key={item.id}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-lg font-semibold text-zinc-950">
+                  <p className="text-lg font-semibold text-foreground">
                     {item.arisanName}
                   </p>
-                  <p className="mt-2 text-sm text-zinc-600">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Lihat ringkasan, anggota, dan pembayaran.
                   </p>
                 </div>
                 <StatusBadge status={item.role === "admin" ? "Admin" : "Anggota"} />
               </div>
-              <p className="mt-6 text-sm font-semibold text-emerald-700 transition group-hover:translate-x-1">
+              <p className="mt-6 text-sm font-semibold text-primary transition group-hover:translate-x-1">
                 Buka arisan
               </p>
             </Link>
@@ -136,7 +136,7 @@ export function ArisanList({ items }: { items: ArisanListItem[] }) {
           >
             Sebelumnya
           </button>
-          <p className="text-sm font-medium text-zinc-600">
+          <p className="text-sm font-medium text-muted-foreground">
             Halaman {currentPage} dari {totalPages}
           </p>
           <button

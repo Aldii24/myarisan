@@ -63,12 +63,12 @@ export default async function GiliranPage({
 
       <GlassPanel className="p-5" variant="elevated">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-emerald-700 text-white">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-primary text-white">
             <Crown className="size-5" />
           </div>
           <div>
-            <p className="text-sm text-zinc-600">Giliran bulan ini</p>
-            <p className="text-xl font-semibold text-zinc-950">
+            <p className="text-sm text-muted-foreground">Giliran bulan ini</p>
+            <p className="text-xl font-semibold text-foreground">
               {data.currentDrawName ?? "Belum diatur"}
             </p>
           </div>
@@ -77,8 +77,8 @@ export default async function GiliranPage({
 
       {isAdmin && periodOverview ? (
         <GlassPanel className="p-5">
-          <h2 className="text-xl font-semibold text-zinc-950">Kelola periode</h2>
-          <p className="mt-1 text-sm text-zinc-600">
+          <h2 className="text-xl font-semibold text-foreground">Kelola periode</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Tutup periode berjalan dan mulai periode berikutnya saat semua sudah
             beres. Pemenang periode ini tetap tersimpan di riwayat.
           </p>
@@ -95,7 +95,7 @@ export default async function GiliranPage({
       ) : null}
 
       <GlassPanel className="p-5">
-        <h2 className="text-xl font-semibold text-zinc-950">Urutan giliran</h2>
+        <h2 className="text-xl font-semibold text-foreground">Urutan giliran</h2>
         {data.members.length === 0 ? (
           <EmptyState title="Belum ada anggota">
             Tambahkan anggota dulu untuk mengatur giliran.
@@ -117,19 +117,19 @@ export default async function GiliranPage({
             {data.members.map((member, index) => (
               <li
                 className={cn(
-                  "flex items-center gap-3 rounded-3xl border border-white/55 bg-white/45 p-3 shadow-sm",
-                  member.isCurrentDraw && "border-emerald-300 bg-emerald-50/80",
+                  "flex items-center gap-3 rounded-3xl border border-border bg-card p-3 shadow-sm",
+                  member.isCurrentDraw && "border-success-border bg-success-surface",
                 )}
                 key={member.id}
               >
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
                   {index + 1}
                 </span>
-                <p className="min-w-0 flex-1 truncate font-semibold text-zinc-950">
+                <p className="min-w-0 flex-1 truncate font-semibold text-foreground">
                   {member.displayName}
                 </p>
                 {member.isCurrentDraw ? (
-                  <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                  <span className="flex items-center gap-1 text-xs font-medium text-primary">
                     <Crown className="size-3" />
                     Bulan ini
                   </span>
@@ -141,7 +141,7 @@ export default async function GiliranPage({
       </GlassPanel>
 
       <GlassPanel className="p-5">
-        <h2 className="text-xl font-semibold text-zinc-950">Riwayat pemenang</h2>
+        <h2 className="text-xl font-semibold text-foreground">Riwayat pemenang</h2>
         {winners.length === 0 ? (
           <EmptyState title="Belum ada pemenang">
             Pemenang akan muncul setelah giliran tiap periode ditentukan.
@@ -150,14 +150,14 @@ export default async function GiliranPage({
           <div className="mt-4 space-y-2">
             {winners.map((winner) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-3xl border border-white/55 bg-white/45 p-3 shadow-sm"
+                className="flex items-center justify-between gap-3 rounded-3xl border border-border bg-card p-3 shadow-sm"
                 key={winner.periodId}
               >
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-zinc-950">
+                  <p className="truncate font-semibold text-foreground">
                     {winner.memberName}
                   </p>
-                  <p className="text-xs text-zinc-600">
+                  <p className="text-xs text-muted-foreground">
                     {winner.periodName} · {formatDateLabel(winner.dueDate)}
                   </p>
                 </div>

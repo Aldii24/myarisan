@@ -42,7 +42,7 @@ export default async function BayarPage({
           title="Cek pembayaran anggota"
         />
         <GlassPanel>
-          <p className="text-sm leading-6 text-zinc-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             Halaman Kirim Bukti dipakai anggota untuk mengirim bukti setor. Untuk
             admin, lanjutkan ke halaman Konfirmasi Bukti agar semua setoran bisa
             dicek rapi.
@@ -106,21 +106,21 @@ export default async function BayarPage({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <GlassPanel>
-          <h2 className="text-lg font-semibold text-zinc-950">Rekening Admin</h2>
-          <p className="mt-3 whitespace-pre-wrap rounded-3xl border border-white/60 bg-white/45 p-4 text-sm leading-6 text-zinc-700">
+          <h2 className="text-lg font-semibold text-foreground">Rekening Admin</h2>
+          <p className="mt-3 whitespace-pre-wrap rounded-3xl border border-border bg-card p-4 text-sm leading-6 text-foreground">
             {data.group.bankAccountText ?? "Belum diisi"}
           </p>
-          <p className="mt-4 text-sm leading-6 text-zinc-600">
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
             Pastikan nominal sesuai setoran arisan, lalu kirim bukti yang jelas.
             Gambar akan dicek admin sebelum status berubah menjadi Sudah Bayar.
           </p>
         </GlassPanel>
 
         <GlassPanel variant="elevated">
-          <h2 className="text-lg font-semibold text-zinc-950">Upload Bukti</h2>
+          <h2 className="text-lg font-semibold text-foreground">Upload Bukti</h2>
           <div className="mt-4">
             {gateMessage ? (
-              <p className="rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 text-sm font-semibold leading-6 text-amber-900">
+              <p className="rounded-3xl border border-warning-border bg-warning-surface p-4 text-sm font-semibold leading-6 text-warning-foreground">
                 {gateMessage}
               </p>
             ) : canUpload ? (
@@ -129,7 +129,7 @@ export default async function BayarPage({
                 defaultAmount={data.group.amountPerPeriod}
               />
             ) : (
-              <p className="rounded-3xl border border-white/60 bg-white/45 p-4 text-sm leading-6 text-zinc-600">
+              <p className="rounded-3xl border border-border bg-card p-4 text-sm leading-6 text-muted-foreground">
                 {data.payment?.status === "pending" ||
                 data.payment?.status === "duplicate_check"
                   ? "Bukti kamu sedang dicek admin."

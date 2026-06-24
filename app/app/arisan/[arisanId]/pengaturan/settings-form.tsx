@@ -8,9 +8,9 @@ import { updateArisanSettingsAction, type SettingsFormState } from "./actions";
 
 const initialState: SettingsFormState = {};
 const inputClass =
-  "h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100";
+  "h-12 w-full rounded-2xl border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 const textareaClass =
-  "min-h-28 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100";
+  "min-h-28 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 
 export function SettingsForm({
   arisanId,
@@ -34,7 +34,7 @@ export function SettingsForm({
   return (
     <form action={formAction} className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-zinc-800" htmlFor="name">
+        <label className="text-sm font-semibold text-foreground" htmlFor="name">
           Nama arisan
         </label>
         <input
@@ -47,7 +47,7 @@ export function SettingsForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-zinc-800" htmlFor="amount">
+        <label className="text-sm font-semibold text-foreground" htmlFor="amount">
           Nominal setoran per orang
         </label>
         <input
@@ -62,7 +62,7 @@ export function SettingsForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-zinc-800" htmlFor="dueDay">
+        <label className="text-sm font-semibold text-foreground" htmlFor="dueDay">
           Batas setor tanggal berapa?
         </label>
         <input
@@ -81,7 +81,7 @@ export function SettingsForm({
 
       <div className="space-y-2">
         <label
-          className="text-sm font-semibold text-zinc-800"
+          className="text-sm font-semibold text-foreground"
           htmlFor="bankAccountText"
         >
           Rekening admin / e-wallet admin
@@ -98,18 +98,18 @@ export function SettingsForm({
         </FormFieldHint>
       </div>
 
-      <p className="rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+      <p className="rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-muted-foreground">
         Periode arisan ({periodLabel}) tidak bisa diubah agar riwayat periode
         tetap konsisten.
       </p>
 
       {state.error ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <p className="rounded-2xl border border-danger-border bg-danger-surface px-4 py-3 text-sm font-semibold text-danger-foreground">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+        <p className="rounded-2xl border border-success-border bg-success-surface px-4 py-3 text-sm font-semibold text-success-foreground">
           {state.success}
         </p>
       ) : null}

@@ -24,10 +24,10 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="name">Nama kamu</Label>
         <div className="relative">
-          <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             autoComplete="name"
-            className="h-12 bg-white pl-10 text-base shadow-sm md:text-sm"
+            className="h-12 bg-card pl-10 text-base shadow-sm md:text-sm"
             id="name"
             name="name"
             placeholder="Contoh: Sinta"
@@ -39,10 +39,10 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="phone">Nomor WhatsApp</Label>
         <div className="relative">
-          <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <Phone className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             autoComplete="tel"
-            className="h-12 bg-white pl-10 text-base shadow-sm md:text-sm"
+            className="h-12 bg-card pl-10 text-base shadow-sm md:text-sm"
             id="phone"
             inputMode="tel"
             name="phone"
@@ -55,10 +55,10 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="pin">Buat PIN 4 angka</Label>
         <div className="relative">
-          <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             autoComplete="new-password"
-            className="h-12 bg-white pl-10 text-base tracking-[0.3em] shadow-sm md:text-sm"
+            className="h-12 bg-card pl-10 text-base tracking-[0.3em] shadow-sm md:text-sm"
             id="pin"
             inputMode="numeric"
             maxLength={4}
@@ -75,10 +75,10 @@ export function RegisterForm() {
       <div className="space-y-2">
         <Label htmlFor="confirmPin">Ulangi PIN</Label>
         <div className="relative">
-          <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400" />
+          <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             autoComplete="new-password"
-            className="h-12 bg-white pl-10 text-base tracking-[0.3em] shadow-sm md:text-sm"
+            className="h-12 bg-card pl-10 text-base tracking-[0.3em] shadow-sm md:text-sm"
             id="confirmPin"
             inputMode="numeric"
             maxLength={4}
@@ -99,7 +99,7 @@ export function RegisterForm() {
       ) : null}
 
       <Button
-        className="h-12 w-full bg-emerald-700 text-sm font-semibold shadow-lg shadow-emerald-900/20 hover:bg-emerald-800"
+        className="h-12 w-full bg-primary text-sm font-semibold shadow-lg shadow-emerald-900/20 hover:bg-primary/90"
         disabled={pending}
         size="lg"
         type="submit"
@@ -109,14 +109,14 @@ export function RegisterForm() {
       </Button>
 
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <ShieldCheck className="size-4 text-emerald-700" />
+        <ShieldCheck className="size-4 text-primary" />
         <span>Tanpa OTP WhatsApp.</span>
       </div>
 
-      <p className="text-center text-sm text-zinc-600">
+      <p className="text-center text-sm text-muted-foreground">
         Sudah punya akun?{" "}
         <Link
-          className="font-semibold text-emerald-700 underline-offset-4 hover:underline"
+          className="font-semibold text-primary underline-offset-4 hover:underline"
           href="/login"
         >
           Masuk di sini

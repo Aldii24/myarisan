@@ -47,8 +47,8 @@ export function PeriodControl({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-zinc-600">Periode aktif</p>
-          <p className="text-lg font-semibold text-zinc-950">
+          <p className="text-sm text-muted-foreground">Periode aktif</p>
+          <p className="text-lg font-semibold text-foreground">
             {activePeriodName ?? "Belum ada periode aktif"}
           </p>
         </div>
@@ -66,12 +66,12 @@ export function PeriodControl({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
           {state.error}
         </p>
       ) : null}
       {state.success ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-lg border border-success-border bg-success-surface px-3 py-2 text-sm text-success-foreground">
           {state.success}
         </p>
       ) : null}
@@ -89,18 +89,18 @@ export function PeriodControl({
           </DialogHeader>
 
           {activePeriodName && !hasDrawWinner ? (
-            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <p className="rounded-lg border border-warning-border bg-warning-surface px-3 py-2 text-sm text-warning-foreground">
               Giliran bulan ini belum diatur. Jika diteruskan, periode ini tidak
               punya catatan pemenang.
             </p>
           ) : null}
 
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-muted-foreground">
             Periode aktif: sudah bayar {paidCount} · belum bayar {unpaidCount}.
           </p>
 
           {state.error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
               {state.error}
             </p>
           ) : null}

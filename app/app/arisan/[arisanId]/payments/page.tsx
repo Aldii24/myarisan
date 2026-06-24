@@ -44,7 +44,7 @@ function PaymentSection({
   return (
     <GlassPanel className="p-5">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         <MetricCard accent={accent} label="Jumlah" value={payments.length} />
       </div>
 
@@ -59,7 +59,7 @@ function PaymentSection({
 
             return (
               <Link
-                className="group rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-emerald-50/75"
+                className="group rounded-3xl border border-border bg-card p-4 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:border-success-border hover:bg-success-surface"
                 href={`/app/arisan/${arisanId}/payments/${payment.id}`}
                 key={payment.id}
               >
@@ -68,47 +68,47 @@ function PaymentSection({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       alt={`Bukti bayar ${payment.memberName ?? "anggota"}`}
-                      className="h-24 w-24 shrink-0 rounded-2xl border border-white/70 object-cover shadow-sm"
+                      className="h-24 w-24 shrink-0 rounded-2xl border border-border object-cover shadow-sm"
                       src={`/api/files/payment-proof/${payment.id}`}
                     />
                   ) : (
-                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white/40 text-xs font-semibold text-zinc-500">
+                    <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-dashed border-border bg-card text-xs font-semibold text-muted-foreground">
                       Bukti
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-semibold text-zinc-950">
+                        <p className="font-semibold text-foreground">
                           {payment.memberName ?? "Anggota"}
                         </p>
-                        <p className="mt-1 text-sm text-zinc-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {payment.periodName}
                         </p>
                       </div>
                       <StatusBadge status={paymentStatusLabel(payment.status)} />
                     </div>
-                    <p className="mt-3 text-lg font-semibold text-zinc-950">
+                    <p className="mt-3 text-lg font-semibold text-foreground">
                       {formatRupiah(payment.amount ?? 0)}
                     </p>
                     {payment.note ? (
-                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-zinc-600">
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {payment.note}
                       </p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap gap-2">
                       {payment.status === "duplicate_check" ? (
-                        <span className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900">
+                        <span className="inline-flex rounded-full border border-warning-border bg-warning-surface px-3 py-1 text-xs font-semibold text-warning-foreground">
                           Bukti mirip
                         </span>
                       ) : null}
                       {warnings.length > 0 ? (
-                        <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-900">
+                        <span className="inline-flex rounded-full border border-warning-border bg-warning-surface px-3 py-1 text-xs font-semibold text-warning-foreground">
                           Perlu dicek
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-3 text-xs font-medium text-zinc-500">
+                    <p className="mt-3 text-xs font-medium text-muted-foreground">
                       {formatDateTimeLabel(payment.createdAt)}
                     </p>
                   </div>
@@ -180,21 +180,21 @@ export default async function AdminPaymentsPage({
       />
 
       {expired ? (
-        <div className="rounded-3xl border border-red-200/80 bg-red-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-red-900">
+        <div className="rounded-3xl border border-danger-border bg-danger-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-danger-foreground">
             Paket arisan sudah habis.
           </p>
-          <p className="mt-1 text-sm leading-6 text-red-800">
+          <p className="mt-1 text-sm leading-6 text-danger-foreground">
             Konfirmasi pembayaran baru dan catat manual dikunci sampai paket
             diperpanjang. Bukti lama tetap bisa dilihat.
           </p>
         </div>
       ) : quotaExhausted ? (
-        <div className="rounded-3xl border border-amber-200/80 bg-amber-50/90 p-4 shadow-sm">
-          <p className="text-sm font-semibold text-amber-950">
+        <div className="rounded-3xl border border-warning-border bg-warning-surface p-4 shadow-sm">
+          <p className="text-sm font-semibold text-warning-foreground">
             Kuota baca bukti otomatis bulan ini habis.
           </p>
-          <p className="mt-1 text-sm leading-6 text-amber-900">
+          <p className="mt-1 text-sm leading-6 text-warning-foreground">
             Pembayaran tetap bisa dicatat manual oleh admin lewat tombol Catat
             Manual. Upgrade paket untuk menambah kuota bukti otomatis.
           </p>

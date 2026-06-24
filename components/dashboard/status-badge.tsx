@@ -28,13 +28,13 @@ export function StatusBadge({
     <Badge
       className={cn(
         "border",
-        isSuccess && "border-emerald-200 bg-emerald-50 text-emerald-800",
-        isPending && "border-amber-200 bg-amber-50 text-amber-800",
-        isDanger && "border-red-200 bg-red-50 text-red-700",
+        isSuccess && "border-success-border bg-success-surface text-success-foreground",
+        isPending && "border-warning-border bg-warning-surface text-warning-foreground",
+        isDanger && "border-danger-border bg-danger-surface text-danger-foreground",
         !isSuccess &&
           !isPending &&
           !isDanger &&
-          "border-slate-200 bg-slate-100 text-slate-700",
+          "border-border bg-muted text-muted-foreground",
         className,
       )}
       variant="outline"

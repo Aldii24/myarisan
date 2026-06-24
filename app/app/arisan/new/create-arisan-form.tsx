@@ -8,9 +8,9 @@ import { createArisanAction, type CreateArisanState } from "./actions";
 
 const initialState: CreateArisanState = {};
 const inputClass =
-  "h-12 w-full rounded-2xl border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100";
+  "h-12 w-full rounded-2xl border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 const textareaClass =
-  "min-h-28 w-full rounded-2xl border border-zinc-300 bg-white px-4 py-3 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100";
+  "min-h-28 w-full rounded-2xl border border-border bg-card px-4 py-3 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring";
 
 export function CreateArisanForm() {
   const [state, formAction, pending] = useActionState(createArisanAction, initialState);
@@ -19,11 +19,11 @@ export function CreateArisanForm() {
     <form action={formAction} className="space-y-6">
       <section className="space-y-4">
         <div>
-          <p className="text-sm font-semibold text-emerald-700">Info Arisan</p>
-          <h2 className="mt-1 text-xl font-semibold text-zinc-950">Nama dan setoran</h2>
+          <p className="text-sm font-semibold text-primary">Info Arisan</p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Nama dan setoran</h2>
         </div>
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-zinc-800" htmlFor="name">
+          <label className="text-sm font-semibold text-foreground" htmlFor="name">
             Nama arisan
           </label>
           <input
@@ -37,7 +37,7 @@ export function CreateArisanForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-zinc-800" htmlFor="amount">
+          <label className="text-sm font-semibold text-foreground" htmlFor="amount">
             Nominal setoran per orang
           </label>
           <input
@@ -54,15 +54,15 @@ export function CreateArisanForm() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-sm font-semibold text-emerald-700">Aturan Setoran</p>
-          <h2 className="mt-1 text-xl font-semibold text-zinc-950">Periode dan batas</h2>
+          <p className="text-sm font-semibold text-primary">Aturan Setoran</p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Periode dan batas</h2>
         </div>
         <fieldset className="space-y-3">
-          <legend className="text-sm font-semibold text-zinc-800">Periode</legend>
+          <legend className="text-sm font-semibold text-foreground">Periode</legend>
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex min-h-12 items-center rounded-2xl border border-zinc-300 bg-white/55 px-4 text-sm font-semibold text-zinc-800 shadow-sm transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+            <label className="flex min-h-12 items-center rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-foreground shadow-sm transition has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
-                className="mr-2 accent-emerald-700"
+                className="mr-2 accent-primary"
                 defaultChecked
                 name="periodType"
                 type="radio"
@@ -70,9 +70,9 @@ export function CreateArisanForm() {
               />
               Bulanan
             </label>
-            <label className="flex min-h-12 items-center rounded-2xl border border-zinc-300 bg-white/55 px-4 text-sm font-semibold text-zinc-800 shadow-sm transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+            <label className="flex min-h-12 items-center rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-foreground shadow-sm transition has-[:checked]:border-primary has-[:checked]:bg-primary/5">
               <input
-                className="mr-2 accent-emerald-700"
+                className="mr-2 accent-primary"
                 name="periodType"
                 type="radio"
                 value="weekly"
@@ -87,7 +87,7 @@ export function CreateArisanForm() {
         </fieldset>
 
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-zinc-800" htmlFor="dueDay">
+          <label className="text-sm font-semibold text-foreground" htmlFor="dueDay">
             Batas setor tanggal berapa?
           </label>
           <input
@@ -110,12 +110,12 @@ export function CreateArisanForm() {
 
       <section className="space-y-4">
         <div>
-          <p className="text-sm font-semibold text-emerald-700">Rekening Admin</p>
-          <h2 className="mt-1 text-xl font-semibold text-zinc-950">Tujuan setoran</h2>
+          <p className="text-sm font-semibold text-primary">Rekening Admin</p>
+          <h2 className="mt-1 text-xl font-semibold text-foreground">Tujuan setoran</h2>
         </div>
         <div className="space-y-2">
           <label
-            className="text-sm font-semibold text-zinc-800"
+            className="text-sm font-semibold text-foreground"
             htmlFor="bankAccountText"
           >
             Rekening admin / e-wallet admin
@@ -134,7 +134,7 @@ export function CreateArisanForm() {
       </section>
 
       {state.error ? (
-        <p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <p className="rounded-2xl border border-danger-border bg-danger-surface px-4 py-3 text-sm font-semibold text-danger-foreground">
           {state.error}
         </p>
       ) : null}

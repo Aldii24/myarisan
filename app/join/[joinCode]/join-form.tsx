@@ -28,12 +28,12 @@ export function JoinForm({
   return (
     <form action={formAction} className="space-y-5">
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-zinc-800">Pilih nama kamu</legend>
+        <legend className="text-sm font-medium text-foreground">Pilih nama kamu</legend>
         <p className="ui-help">Pilih nama sesuai daftar dari admin arisan.</p>
         <div className="space-y-2">
           {members.map((member) => (
             <label
-              className="flex min-h-12 items-center rounded-lg border border-zinc-300 px-4 text-sm font-semibold text-zinc-800 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50"
+              className="flex min-h-12 items-center rounded-lg border border-border px-4 text-sm font-semibold text-foreground has-[:checked]:border-primary has-[:checked]:bg-primary/5"
               key={member.id}
             >
               <input
@@ -50,11 +50,11 @@ export function JoinForm({
       </fieldset>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-800" htmlFor="phone">
+        <label className="text-sm font-medium text-foreground" htmlFor="phone">
           Nomor WhatsApp
         </label>
         <input
-          className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="h-12 w-full rounded-lg border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           id="phone"
           inputMode="tel"
           name="phone"
@@ -66,12 +66,12 @@ export function JoinForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-800" htmlFor="pin">
+          <label className="text-sm font-medium text-foreground" htmlFor="pin">
             Buat PIN 4 angka
           </label>
           <input
             autoComplete="new-password"
-            className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-4 text-base tracking-[0.4em] outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+            className="h-12 w-full rounded-lg border border-border bg-card px-4 text-base tracking-[0.4em] outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             id="pin"
             inputMode="numeric"
             maxLength={4}
@@ -85,12 +85,12 @@ export function JoinForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium text-zinc-800" htmlFor="confirmPin">
+          <label className="text-sm font-medium text-foreground" htmlFor="confirmPin">
             Ulangi PIN
           </label>
           <input
             autoComplete="new-password"
-            className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-4 text-base tracking-[0.4em] outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+            className="h-12 w-full rounded-lg border border-border bg-card px-4 text-base tracking-[0.4em] outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
             id="confirmPin"
             inputMode="numeric"
             maxLength={4}
@@ -105,7 +105,7 @@ export function JoinForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
           {state.error}
         </p>
       ) : null}

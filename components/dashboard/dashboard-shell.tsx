@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 
 import { BrandMark } from "@/components/brand-mark";
 import { MobileBottomNav } from "@/components/dashboard/mobile-bottom-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -91,14 +92,14 @@ function NotificationBell({
           : "Notifikasi"
       }
       className={cn(
-        "relative inline-flex items-center justify-center rounded-lg border bg-white text-zinc-700 transition-colors hover:bg-zinc-50",
+        "relative inline-flex items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
         className,
       )}
       href="/app/notifications"
     >
       <Bell className="size-4" />
       {unreadCount > 0 ? (
-        <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-emerald-600 px-1 text-[0.6rem] font-semibold leading-4 text-white">
+        <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.6rem] font-semibold leading-4 text-primary-foreground">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       ) : null}
@@ -131,33 +132,38 @@ export function DashboardShell({
             : "ringkasan";
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_right,_rgba(224,231,255,0.72)_0,_transparent_28%),radial-gradient(circle_at_bottom_left,_rgba(209,250,229,0.72)_0,_transparent_26%),#f7f4ee] px-4 py-4 pb-24 sm:px-6 lg:px-8 lg:py-6 lg:pb-8">
+    <main className="min-h-dvh overflow-x-hidden bg-background px-4 py-4 pb-24 sm:px-6 lg:px-8 lg:py-6 lg:pb-8">
       <div className="mx-auto grid w-full max-w-7xl gap-5 lg:grid-cols-[272px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
-          <Card className="sticky top-6 gap-0 border-white/90 bg-white/88 py-0 shadow-sm backdrop-blur">
+          <Card className="sticky top-6 gap-0 py-0 shadow-sm">
             <div className="flex items-center gap-3 p-5">
               <BrandMark className="size-10" />
               <div>
-                <p className="font-semibold text-zinc-950">MyArisan</p>
-                <p className="text-xs text-zinc-500">Halaman Arisan</p>
+                <p className="font-semibold text-foreground">MyArisan</p>
+                <p className="text-xs text-muted-foreground">Halaman Arisan</p>
               </div>
             </div>
             <Separator />
             <nav className="space-y-1 p-3">
               {desktopItems(arisanId, role).map((item) => {
                 const Icon = item.icon;
+                const active = item.id === activeItem;
 
                 return (
                   <Link
+                    aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-                      item.id === activeItem
-                        ? "bg-emerald-50 text-emerald-800"
-                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950",
+                      "relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground",
                     )}
                     href={item.href}
                     key={item.id}
                   >
+                    {active ? (
+                      <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-primary" />
+                    ) : null}
                     <Icon className="size-4" />
                     {item.label}
                   </Link>
@@ -167,11 +173,12 @@ export function DashboardShell({
             <Separator />
             <div className="m-3 flex items-center gap-2">
               <Link
-                className="flex h-10 flex-1 items-center justify-center rounded-lg border bg-white px-3 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                className="flex h-10 flex-1 items-center justify-center rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-accent"
                 href="/app/select-arisan"
               >
                 Ganti Arisan
               </Link>
+              <ThemeToggle className="size-10 shrink-0" />
               <NotificationBell className="size-10 shrink-0" unreadCount={unreadCount} />
             </div>
           </Card>
@@ -182,19 +189,20 @@ export function DashboardShell({
             <div className="flex items-center gap-3">
               <BrandMark className="size-9" />
               <div>
-                <p className="text-sm font-semibold text-zinc-950">MyArisan</p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-sm font-semibold text-foreground">MyArisan</p>
+                <p className="text-xs text-muted-foreground">
                   {role === "admin" ? "Admin Arisan" : "Anggota Arisan"}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Link
-                className="flex h-9 items-center rounded-lg border bg-white px-3 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50"
+                className="flex h-9 items-center rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition-colors hover:bg-accent"
                 href="/app/select-arisan"
               >
                 Ganti Arisan
               </Link>
+              <ThemeToggle className="size-9 shrink-0" />
               <NotificationBell className="size-9 shrink-0" unreadCount={unreadCount} />
             </div>
           </header>

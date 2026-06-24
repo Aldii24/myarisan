@@ -1,18 +1,19 @@
 import Link from "next/link";
 
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+
 export function cn(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
 
+const buttonBase =
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60";
+
 export const buttonStyles = {
-  danger:
-    "inline-flex min-h-11 items-center justify-center rounded-2xl border border-red-200/80 bg-red-50/80 px-4 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70",
-  ghost:
-    "inline-flex min-h-11 items-center justify-center rounded-2xl px-4 text-sm font-semibold text-zinc-700 transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-70",
-  primary:
-    "inline-flex min-h-11 items-center justify-center rounded-2xl bg-emerald-700 px-4 text-sm font-semibold text-white shadow-[0_18px_38px_rgba(22,108,84,0.25)] transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-70",
-  secondary:
-    "inline-flex min-h-11 items-center justify-center rounded-2xl border border-white/55 bg-white/45 px-4 text-sm font-semibold text-zinc-800 shadow-sm backdrop-blur transition hover:border-emerald-200 hover:bg-emerald-50/80 disabled:cursor-not-allowed disabled:opacity-70",
+  danger: `${buttonBase} border border-danger-border bg-danger-surface text-danger-foreground hover:bg-danger-border/40`,
+  ghost: `${buttonBase} text-muted-foreground hover:bg-accent hover:text-foreground`,
+  primary: `${buttonBase} bg-primary text-primary-foreground shadow-sm hover:bg-primary/90`,
+  secondary: `${buttonBase} border border-border bg-card text-foreground hover:bg-accent`,
 };
 
 export function BrandLogo({
@@ -68,8 +69,10 @@ export function BrandLogo({
       </svg>
       {!compact ? (
         <div>
-          <p className="text-lg font-semibold tracking-tight text-zinc-950">MyArisan</p>
-          <p className="text-xs font-medium text-zinc-500">Rekap arisan lebih tenang</p>
+          <p className="text-lg font-semibold tracking-tight text-foreground">MyArisan</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Rekap arisan lebih tenang
+          </p>
         </div>
       ) : null}
     </div>
@@ -78,13 +81,8 @@ export function BrandLogo({
 
 export function AppBackground({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-zinc-50 px-4 py-5 text-zinc-950 sm:px-6 lg:px-8">
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute -left-20 top-[-8rem] h-72 w-72 rounded-full bg-[#f4b08f]/35 blur-3xl" />
-        <div className="absolute right-[-7rem] top-12 h-80 w-80 rounded-full bg-[#bfe5d5]/55 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-1/3 h-96 w-96 rounded-full bg-[#c8b6ff]/30 blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.36)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.28)_1px,transparent_1px)] bg-[size:44px_44px] opacity-30" />
-      </div>
+    <main className="relative min-h-dvh bg-background px-4 py-5 text-foreground sm:px-6 lg:px-8">
+      <ThemeToggle className="fixed right-4 top-4 z-50 shadow-sm" />
       {children}
     </main>
   );
@@ -102,9 +100,9 @@ export function GlassPanel({
   return (
     <section
       className={cn(
-        "glass-panel relative overflow-hidden rounded-[1.5rem] border border-white/55 bg-white/58 p-5 shadow-[0_24px_80px_rgba(67,48,35,0.13)] backdrop-blur-2xl",
-        variant === "elevated" && "bg-white/68 shadow-[0_30px_110px_rgba(67,48,35,0.18)]",
-        variant === "subtle" && "bg-white/38 shadow-[0_14px_48px_rgba(67,48,35,0.09)]",
+        "relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm",
+        variant === "elevated" && "shadow-md",
+        variant === "subtle" && "bg-muted/40 shadow-none",
         className,
       )}
     >
@@ -127,6 +125,13 @@ export function PageShell({
   );
 }
 
+const metricAccent = {
+  amber: "bg-warning-foreground",
+  emerald: "bg-success-foreground",
+  neutral: "bg-muted-foreground",
+  red: "bg-danger-foreground",
+};
+
 export function MetricCard({
   accent = "emerald",
   label,
@@ -136,24 +141,15 @@ export function MetricCard({
   label: string;
   value: React.ReactNode;
 }) {
-  const accentClasses = {
-    amber: "from-amber-400/24 to-orange-200/18 text-amber-900",
-    emerald: "from-emerald-400/24 to-teal-100/20 text-emerald-950",
-    neutral: "from-slate-300/22 to-white/10 text-zinc-800",
-    red: "from-red-300/22 to-rose-100/12 text-red-700",
-  };
-
   return (
-    <div
-      className={cn(
-        "rounded-3xl border border-white/55 bg-gradient-to-br p-4 shadow-sm backdrop-blur",
-        accentClasses[accent],
-      )}
-    >
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {label}
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <div className="flex items-center gap-2">
+        <span className={cn("size-1.5 rounded-full", metricAccent[accent])} />
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      </div>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+        {value}
       </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
     </div>
   );
 }
@@ -191,11 +187,14 @@ export function StatusBadge({ status }: { status: string | null | undefined }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold shadow-sm backdrop-blur",
-        isPaid && "border-emerald-200/80 bg-emerald-50/90 text-emerald-900",
-        isPending && "border-amber-200/80 bg-amber-50/95 text-amber-900",
-        isRejected && "border-red-200/80 bg-red-50/95 text-red-700",
-        !isPaid && !isPending && !isRejected && "border-zinc-200/80 bg-zinc-100/85 text-zinc-700",
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        isPaid && "border-success-border bg-success-surface text-success-foreground",
+        isPending && "border-warning-border bg-warning-surface text-warning-foreground",
+        isRejected && "border-danger-border bg-danger-surface text-danger-foreground",
+        !isPaid &&
+          !isPending &&
+          !isRejected &&
+          "border-border bg-muted text-muted-foreground",
       )}
     >
       {status ?? "Belum Bayar"}
@@ -213,14 +212,16 @@ export function EmptyState({
   title?: string;
 }) {
   return (
-    <GlassPanel className="p-5 text-center" variant="subtle">
-      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-900">
-        <span className="text-lg font-semibold">-</span>
+    <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
+      <div className="mx-auto mb-3 flex size-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        <span className="text-lg font-semibold">–</span>
       </div>
-      <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-600">{children}</p>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+        {children}
+      </p>
       {action ? <div className="mt-4">{action}</div> : null}
-    </GlassPanel>
+    </div>
   );
 }
 
@@ -237,7 +238,7 @@ export function CopyTextCard({
 }) {
   return (
     <GlassPanel className="p-5" variant="subtle">
-      <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
+      <h2 className="text-base font-semibold text-foreground">{title}</h2>
       <div className="mt-4">{children}</div>
     </GlassPanel>
   );

@@ -14,13 +14,13 @@ export function EmptyState({
   title: string;
 }) {
   return (
-    <Card className="border-dashed border-zinc-200 bg-white/75 shadow-none">
+    <Card className="border-dashed border-border bg-card shadow-none">
       <CardContent className="flex flex-col items-center px-5 py-8 text-center">
-        <span className="flex size-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+        <span className="flex size-11 items-center justify-center rounded-xl bg-success-surface text-success-foreground">
           <Icon className="size-5" />
         </span>
-        <h2 className="mt-4 text-base font-semibold text-zinc-950">{title}</h2>
-        <p className="mt-2 max-w-md text-sm leading-6 text-zinc-500">
+        <h2 className="mt-4 text-base font-semibold text-foreground">{title}</h2>
+        <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
           {description}
         </p>
         {action ? <div className="mt-4">{action}</div> : null}

@@ -80,7 +80,7 @@ export function MembersList({
 
   if (members.length === 0) {
     return (
-      <p className="mt-4 rounded-3xl border border-white/55 bg-white/45 p-4 text-sm text-zinc-600">
+      <p className="mt-4 rounded-3xl border border-border bg-card p-4 text-sm text-muted-foreground">
         Belum ada anggota. Tambahkan nama anggota dulu.
       </p>
     );
@@ -89,12 +89,12 @@ export function MembersList({
   return (
     <div className="mt-5 space-y-3">
       {feedback.error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
           {feedback.error}
         </p>
       ) : null}
       {feedback.success ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <p className="rounded-lg border border-success-border bg-success-surface px-3 py-2 text-sm text-success-foreground">
           {feedback.success}
         </p>
       ) : null}
@@ -102,14 +102,14 @@ export function MembersList({
       <div className="grid gap-3 md:grid-cols-2">
         {members.map((member) => (
           <div
-            className="rounded-3xl border border-white/55 bg-white/45 p-4 shadow-sm"
+            className="rounded-3xl border border-border bg-card p-4 shadow-sm"
             key={member.id}
           >
             {editingId === member.id ? (
               <div className="space-y-3">
                 <input
                   aria-label="Nama anggota"
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onChange={(event) => setEditingName(event.target.value)}
                   value={editingName}
                 />
@@ -137,7 +137,7 @@ export function MembersList({
             ) : (
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-semibold text-zinc-950">
+                  <p className="truncate font-semibold text-foreground">
                     {member.displayName}
                   </p>
                   <p className="mt-1">

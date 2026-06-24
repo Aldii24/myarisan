@@ -101,8 +101,8 @@ export default async function PaketPage({
         title={group?.name ?? "Arisan"}
       />
       {packageStatus.isExpiredPaid ? (
-        <GlassPanel className="border-amber-200/80 bg-amber-50/80">
-          <p className="text-sm font-semibold leading-6 text-amber-950">
+        <GlassPanel className="border-warning-border bg-warning-surface">
+          <p className="text-sm font-semibold leading-6 text-warning-foreground">
             Paket kamu sudah habis. Data tetap aman, tapi fitur bukti otomatis
             dikunci sampai paket diperpanjang.
           </p>
@@ -133,21 +133,21 @@ export default async function PaketPage({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <GlassPanel>
-          <h2 className="text-lg font-semibold text-zinc-950">Paket Saat Ini</h2>
+          <h2 className="text-lg font-semibold text-foreground">Paket Saat Ini</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-3xl border border-white/60 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="rounded-3xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Anggota
               </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {packageStatus.memberUsed}/{packageStatus.memberLimit}
               </p>
             </div>
-            <div className="rounded-3xl border border-white/60 bg-white/45 p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="rounded-3xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Baca Bukti
               </p>
-              <p className="mt-2 text-2xl font-semibold text-zinc-950">
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {formatProofUsage(
                   packageStatus.proofUsed,
                   packageStatus.proofLimit,
@@ -155,14 +155,14 @@ export default async function PaketPage({
               </p>
             </div>
           </div>
-          <p className="mt-4 text-sm leading-6 text-zinc-600">
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
             Paket berlaku per arisan. Pembayaran dilakukan manual lewat QRIS dan
             aktif setelah dicek owner MyArisan.
           </p>
         </GlassPanel>
 
         <GlassPanel variant="elevated">
-          <h2 className="text-lg font-semibold text-zinc-950">Pilih Paket</h2>
+          <h2 className="text-lg font-semibold text-foreground">Pilih Paket</h2>
           <div className="mt-4 grid gap-3">
             {paidPlans.map((plan) => {
               const isHighlighted = plan.id === "pro";
@@ -170,25 +170,25 @@ export default async function PaketPage({
               return (
                 <div
                   className={cn(
-                    "rounded-3xl border border-white/60 bg-white/45 p-4 shadow-sm",
-                    isHighlighted && "border-emerald-200 bg-emerald-50/70",
+                    "rounded-3xl border border-border bg-card p-4 shadow-sm",
+                    isHighlighted && "border-success-border bg-success-surface",
                   )}
                   key={plan.id}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-semibold text-zinc-950">
+                        <h3 className="text-lg font-semibold text-foreground">
                           {plan.name}
                         </h3>
                         {isHighlighted ? <StatusBadge status="Rekomendasi" /> : null}
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-zinc-600">
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
                         {plan.maxMembers} anggota,{" "}
                         {formatProofLimit(plan.monthlyProofLimit)} bukti/bulan
                       </p>
                     </div>
-                    <p className="text-sm font-semibold text-zinc-950">
+                    <p className="text-sm font-semibold text-foreground">
                       {formatRupiah(plan.price)}
                     </p>
                   </div>

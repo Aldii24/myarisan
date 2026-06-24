@@ -34,10 +34,10 @@ export default async function SelectArisanPage() {
           <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
               <BrandLogo />
-              <h1 className="mt-6 text-3xl font-semibold tracking-tight text-zinc-950">
+              <h1 className="mt-6 text-3xl font-semibold tracking-tight text-foreground">
                 Pilih arisan
               </h1>
-              <p className="mt-2 text-sm leading-6 text-zinc-600">
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Halo, {user.name ?? user.phone}. Buka arisan yang ingin kamu cek
                 hari ini.
               </p>

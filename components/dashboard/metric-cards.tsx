@@ -11,11 +11,11 @@ export type DashboardMetric = {
 };
 
 const toneClasses = {
-  amber: "bg-amber-50 text-amber-700",
-  emerald: "bg-emerald-50 text-emerald-700",
-  indigo: "bg-indigo-50 text-indigo-700",
-  red: "bg-red-50 text-red-700",
-  slate: "bg-slate-100 text-slate-700",
+  amber: "bg-warning-surface text-warning-foreground",
+  emerald: "bg-success-surface text-success-foreground",
+  indigo: "bg-info-surface text-info-foreground",
+  red: "bg-danger-surface text-danger-foreground",
+  slate: "bg-muted text-muted-foreground",
 };
 
 export function MetricCards({ metrics }: { metrics: DashboardMetric[] }) {
@@ -27,11 +27,11 @@ export function MetricCards({ metrics }: { metrics: DashboardMetric[] }) {
 
         return (
           <Card
-            className="min-w-0 rounded-xl border border-white/90 bg-white p-4 shadow-sm ring-0"
+            className="min-w-0 rounded-xl border border-border bg-card p-4 shadow-sm ring-0"
             key={metric.label}
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="min-w-0 text-xs font-medium leading-5 text-zinc-500">
+              <p className="min-w-0 text-xs font-medium leading-5 text-muted-foreground">
                 {metric.label}
               </p>
               {Icon ? (
@@ -45,7 +45,7 @@ export function MetricCards({ metrics }: { metrics: DashboardMetric[] }) {
                 </span>
               ) : null}
             </div>
-            <p className="mt-2 break-words text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
+            <p className="mt-2 break-words text-xl font-semibold tracking-tight text-foreground md:text-2xl">
               {metric.value}
             </p>
           </Card>

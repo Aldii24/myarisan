@@ -4,26 +4,76 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Crisp neutral enterprise SaaS palette (light) ───────────────────── */
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.97 0.012 78);
-  --foreground: oklch(0.22 0.02 155);
-  --card: oklch(0.995 0.005 80);
-  --card-foreground: oklch(0.22 0.02 155);
-  --popover: oklch(0.995 0.005 80);
-  --popover-foreground: oklch(0.22 0.02 155);
-  --primary: oklch(0.46 0.11 159);
-  --primary-foreground: oklch(0.99 0.005 80);
-  --secondary: oklch(0.94 0.018 155);
-  --secondary-foreground: oklch(0.28 0.045 155);
-  --muted: oklch(0.95 0.012 80);
-  --muted-foreground: oklch(0.49 0.025 80);
-  --accent: oklch(0.93 0.032 285);
-  --accent-foreground: oklch(0.32 0.07 285);
-  --destructive: oklch(0.57 0.2 27);
-  --border: oklch(0.88 0.018 80);
-  --input: oklch(0.88 0.018 80);
-  --ring: oklch(0.57 0.12 159);
+  --radius: 0.625rem;
+  --background: oklch(0.985 0.002 247);
+  --foreground: oklch(0.21 0.02 256);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.02 256);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.02 256);
+  --primary: oklch(0.55 0.13 162);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.968 0.004 247);
+  --secondary-foreground: oklch(0.28 0.02 256);
+  --muted: oklch(0.968 0.004 247);
+  --muted-foreground: oklch(0.55 0.02 256);
+  --accent: oklch(0.968 0.004 247);
+  --accent-foreground: oklch(0.21 0.02 256);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.922 0.005 247);
+  --input: oklch(0.922 0.005 247);
+  --ring: oklch(0.65 0.13 162);
+
+  /* Semantic status tokens */
+  --success-surface: oklch(0.97 0.024 162);
+  --success-border: oklch(0.9 0.06 162);
+  --success-foreground: oklch(0.5 0.12 162);
+  --warning-surface: oklch(0.97 0.035 85);
+  --warning-border: oklch(0.9 0.08 85);
+  --warning-foreground: oklch(0.52 0.11 70);
+  --danger-surface: oklch(0.97 0.02 25);
+  --danger-border: oklch(0.9 0.06 25);
+  --danger-foreground: oklch(0.52 0.2 27);
+  --info-surface: oklch(0.97 0.02 256);
+  --info-border: oklch(0.9 0.05 262);
+  --info-foreground: oklch(0.52 0.15 264);
+}
+
+/* ── Dark theme (deep slate, lightened desaturated accents) ──────────── */
+.dark {
+  --background: oklch(0.19 0.015 257);
+  --foreground: oklch(0.97 0.003 247);
+  --card: oklch(0.225 0.016 257);
+  --card-foreground: oklch(0.97 0.003 247);
+  --popover: oklch(0.225 0.016 257);
+  --popover-foreground: oklch(0.97 0.003 247);
+  --primary: oklch(0.66 0.14 162);
+  --primary-foreground: oklch(0.16 0.02 162);
+  --secondary: oklch(0.27 0.015 257);
+  --secondary-foreground: oklch(0.95 0.003 247);
+  --muted: oklch(0.27 0.015 257);
+  --muted-foreground: oklch(0.7 0.015 257);
+  --accent: oklch(0.31 0.016 257);
+  --accent-foreground: oklch(0.97 0.003 247);
+  --destructive: oklch(0.62 0.2 25);
+  --border: oklch(0.32 0.014 257);
+  --input: oklch(0.34 0.014 257);
+  --ring: oklch(0.6 0.13 162);
+
+  --success-surface: oklch(0.27 0.04 162);
+  --success-border: oklch(0.4 0.07 162);
+  --success-foreground: oklch(0.84 0.13 162);
+  --warning-surface: oklch(0.28 0.04 80);
+  --warning-border: oklch(0.42 0.07 80);
+  --warning-foreground: oklch(0.86 0.12 85);
+  --danger-surface: oklch(0.28 0.06 25);
+  --danger-border: oklch(0.44 0.1 25);
+  --danger-foreground: oklch(0.82 0.13 25);
+  --info-surface: oklch(0.28 0.05 262);
+  --info-border: oklch(0.44 0.08 262);
+  --info-foreground: oklch(0.84 0.11 264);
 }
 
 @theme inline {
@@ -46,6 +96,18 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-border: var(--danger-border);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-info-foreground: var(--info-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -58,7 +120,7 @@
 
 body {
   min-height: 100vh;
-  background: #f7f3ec;
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif;
 }

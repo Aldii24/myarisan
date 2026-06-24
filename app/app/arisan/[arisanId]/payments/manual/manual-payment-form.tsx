@@ -31,11 +31,11 @@ export function ManualPaymentForm({
   return (
     <form action={formAction} className="space-y-5">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-800" htmlFor="memberUserId">
+        <label className="text-sm font-medium text-foreground" htmlFor="memberUserId">
           Anggota
         </label>
         <select
-          className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="h-12 w-full rounded-lg border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           defaultValue=""
           id="memberUserId"
           name="memberUserId"
@@ -51,17 +51,17 @@ export function ManualPaymentForm({
             </option>
           ))}
         </select>
-        <p className="text-xs leading-5 text-zinc-500">
+        <p className="text-xs leading-5 text-muted-foreground">
           Hanya anggota yang sudah bergabung yang bisa dicatat manual.
         </p>
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-800" htmlFor="amount">
+        <label className="text-sm font-medium text-foreground" htmlFor="amount">
           Nominal
         </label>
         <input
-          className="h-12 w-full rounded-lg border border-zinc-300 bg-white px-4 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="h-12 w-full rounded-lg border border-border bg-card px-4 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           defaultValue={defaultAmount}
           id="amount"
           inputMode="numeric"
@@ -71,11 +71,11 @@ export function ManualPaymentForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-zinc-800" htmlFor="note">
+        <label className="text-sm font-medium text-foreground" htmlFor="note">
           Catatan opsional
         </label>
         <textarea
-          className="min-h-24 w-full rounded-lg border border-zinc-300 bg-white px-4 py-3 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+          className="min-h-24 w-full rounded-lg border border-border bg-card px-4 py-3 text-base outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
           id="note"
           name="note"
           placeholder="Contoh: bayar tunai ke admin"
@@ -83,13 +83,13 @@ export function ManualPaymentForm({
       </div>
 
       {state.error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-lg border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-foreground">
           {state.error}
         </p>
       ) : null}
 
       {state.success ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+        <p className="rounded-lg border border-success-border bg-success-surface px-3 py-2 text-sm text-success-foreground">
           {state.success}
         </p>
       ) : null}

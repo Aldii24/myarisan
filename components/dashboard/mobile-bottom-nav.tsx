@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -95,9 +94,10 @@ export function MobileBottomNav({
   const items = getItems(arisanId, role);
 
   return (
-    <Card
+    <nav
+      aria-label="Navigasi utama"
       className={cn(
-        "fixed inset-x-3 bottom-3 z-50 grid gap-0 border-white/90 bg-white/92 px-1 py-1 shadow-2xl shadow-zinc-900/15 backdrop-blur-xl lg:hidden",
+        "fixed inset-x-3 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 grid gap-0 rounded-2xl border border-border bg-card/90 p-1 shadow-lg shadow-foreground/10 backdrop-blur-xl lg:hidden",
         gridColsByCount[items.length] ?? "grid-cols-4",
       )}
     >
@@ -107,20 +107,26 @@ export function MobileBottomNav({
 
         return (
           <Link
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-[0.68rem] font-medium transition-colors",
-              active
-                ? "bg-emerald-50 text-emerald-800"
-                : "text-zinc-500 hover:text-zinc-900",
+              "flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[0.68rem] font-medium transition-[transform,color] duration-150 active:scale-95 motion-reduce:active:scale-100",
+              active ? "text-primary" : "text-muted-foreground hover:text-foreground",
             )}
             href={item.href}
             key={item.id}
           >
-            <Icon className="size-4" />
-            <span className="truncate">{item.label}</span>
+            <span
+              className={cn(
+                "flex size-8 items-center justify-center rounded-lg transition-colors",
+                active ? "bg-primary/10" : "bg-transparent",
+              )}
+            >
+              <Icon className="size-[1.15rem]" />
+            </span>
+            <span className="max-w-full truncate">{item.label}</span>
           </Link>
         );
       })}
-    </Card>
+    </nav>
   );
 }

@@ -53,24 +53,24 @@ function statusBadgeClass(status: string) {
   const normalized = status.toLocaleLowerCase("id-ID");
 
   if (normalized.includes("sudah") || normalized.includes("aktif")) {
-    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+    return "border-success-border bg-success-surface text-success-foreground";
   }
 
   if (normalized.includes("menunggu")) {
-    return "border-amber-200 bg-amber-50 text-amber-800";
+    return "border-warning-border bg-warning-surface text-warning-foreground";
   }
 
   if (normalized.includes("ditolak") || normalized.includes("expired")) {
-    return "border-red-200 bg-red-50 text-red-700";
+    return "border-danger-border bg-danger-surface text-danger-foreground";
   }
 
-  return "border-zinc-200 bg-zinc-100 text-zinc-700";
+  return "border-border bg-muted text-muted-foreground";
 }
 
 function NotFoundCard() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <Card className="w-full max-w-md bg-white shadow-sm">
+      <Card className="w-full max-w-md bg-card shadow-sm">
         <CardHeader>
           <BrandMark />
           <CardTitle className="mt-3 text-xl">Arisan tidak ditemukan</CardTitle>
@@ -103,11 +103,11 @@ function DesktopHeader({
   role: "Admin" | "Anggota";
 }) {
   return (
-    <Card className="hidden border-white/80 bg-white/85 shadow-sm lg:flex">
+    <Card className="hidden shadow-sm lg:flex">
       <CardHeader className="p-6">
         <div className="flex items-center gap-2">
           <Badge
-            className={role === "Admin" ? "bg-emerald-700 text-white" : ""}
+            className={role === "Admin" ? "bg-primary text-primary-foreground" : ""}
             variant={role === "Admin" ? "default" : "secondary"}
           >
             {role}
@@ -163,25 +163,25 @@ async function AdminDashboard({
       icon: CheckCircle2,
       label: "Sudah Bayar",
       value: dashboard.paidCount,
-      tone: "text-emerald-700",
+      tone: "text-success-foreground",
     },
     {
       icon: Users,
       label: "Belum Bayar",
       value: unpaidCount,
-      tone: "text-zinc-700",
+      tone: "text-muted-foreground",
     },
     {
       icon: Clock3,
       label: "Menunggu Dicek",
       value: dashboard.pendingCount,
-      tone: "text-amber-700",
+      tone: "text-warning-foreground",
     },
     {
       icon: CircleDollarSign,
       label: "Total Terkumpul",
       value: formatRupiah(dashboard.totalCollected),
-      tone: "text-indigo-700",
+      tone: "text-info-foreground",
     },
   ];
 
@@ -210,7 +210,7 @@ async function AdminDashboard({
             }
           />
 
-          <Card className="border-0 bg-[linear-gradient(135deg,#6758c9_0%,#536cc5_48%,#1d8065_100%)] text-white shadow-xl shadow-indigo-900/15 ring-0 lg:hidden">
+          <Card className="border-0 bg-[linear-gradient(135deg,#0f5f4a_0%,#157a5f_52%,#1d8065_100%)] text-white shadow-xl shadow-emerald-900/25 ring-0 lg:hidden">
             <CardHeader className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -238,7 +238,7 @@ async function AdminDashboard({
                 <Link
                   className={cn(
                     buttonVariants({ size: "sm", variant: "secondary" }),
-                    "bg-white text-indigo-800 hover:bg-white/90",
+                    "bg-white text-emerald-800 hover:bg-white/90",
                   )}
                   href={`/app/arisan/${arisanId}/payments`}
                 >
@@ -260,20 +260,20 @@ async function AdminDashboard({
           </Card>
 
           {packageStatus.isExpiredPaid ? (
-            <Alert className="border-amber-200 bg-amber-50">
-              <PackageIcon className="text-amber-700" />
-              <AlertTitle className="text-amber-900">Paket sudah habis</AlertTitle>
-              <AlertDescription className="text-amber-800">
+            <Alert className="border-warning-border bg-warning-surface">
+              <PackageIcon className="text-warning-foreground" />
+              <AlertTitle className="text-warning-foreground">Paket sudah habis</AlertTitle>
+              <AlertDescription className="text-warning-foreground">
                 Data tetap aman, tapi fitur bukti otomatis dikunci sampai paket
                 diperpanjang.
               </AlertDescription>
             </Alert>
           ) : null}
           {packageStatus.isNearExpiry ? (
-            <Alert className="border-amber-200 bg-amber-50">
-              <Clock3 className="text-amber-700" />
-              <AlertTitle className="text-amber-900">Paket hampir habis</AlertTitle>
-              <AlertDescription className="text-amber-800">
+            <Alert className="border-warning-border bg-warning-surface">
+              <Clock3 className="text-warning-foreground" />
+              <AlertTitle className="text-warning-foreground">Paket hampir habis</AlertTitle>
+              <AlertDescription className="text-warning-foreground">
                 Perpanjang paket supaya baca bukti otomatis tetap aktif.
               </AlertDescription>
             </Alert>
@@ -285,16 +285,16 @@ async function AdminDashboard({
 
               return (
                 <Card
-                  className="rounded-xl border border-white/80 bg-white p-4 shadow-sm ring-0"
+                  className="rounded-xl border border-border bg-card p-4 shadow-sm ring-0"
                   key={item.label}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {item.label}
                     </p>
                     <Icon className={cn("size-4", item.tone)} />
                   </div>
-                  <p className="mt-2 text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
+                  <p className="mt-2 text-xl font-semibold tracking-tight text-foreground md:text-2xl">
                     {item.value}
                   </p>
                 </Card>
@@ -303,7 +303,7 @@ async function AdminDashboard({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Ringkasan Arisan</CardTitle>
                 <CardDescription>
@@ -358,7 +358,7 @@ async function AdminDashboard({
                       {index > 0 ? <Separator className="mb-4" /> : null}
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                          <div className="flex size-9 items-center justify-center rounded-lg bg-success-surface text-success-foreground">
                             <Icon className="size-4" />
                           </div>
                           <span className="text-sm text-muted-foreground">
@@ -375,7 +375,7 @@ async function AdminDashboard({
               </CardContent>
             </Card>
 
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Aksi Cepat</CardTitle>
                 <CardDescription>
@@ -421,7 +421,7 @@ async function AdminDashboard({
                       href={item.href}
                       key={item.label}
                     >
-                      <Icon className="size-5 text-emerald-700" />
+                      <Icon className="size-5 text-primary" />
                       {item.label}
                     </Link>
                   );
@@ -431,7 +431,7 @@ async function AdminDashboard({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Card className="bg-white shadow-sm" id="rekap">
+            <Card className="bg-card shadow-sm" id="rekap">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Rekap</CardTitle>
                 <CardDescription>
@@ -441,7 +441,7 @@ async function AdminDashboard({
               <CardContent className="space-y-4 px-4 pb-4 md:px-6 md:pb-6">
                 <CopyShareText text={recapText} />
                 <div>
-                  <p className="text-xs font-medium text-zinc-500">
+                  <p className="text-xs font-medium text-muted-foreground">
                     Export rekap
                   </p>
                   {exportCapabilities.pdf || exportCapabilities.excel ? (
@@ -478,7 +478,7 @@ async function AdminDashboard({
                         ? "Export Excel tersedia di paket Pro dan Premium."
                         : "Export PDF dan Excel tersedia di paket berbayar."}{" "}
                       <Link
-                        className="font-medium text-emerald-700 underline-offset-2 hover:underline"
+                        className="font-medium text-primary underline-offset-2 hover:underline"
                         href={`/app/arisan/${arisanId}/paket`}
                       >
                         Lihat Paket
@@ -489,7 +489,7 @@ async function AdminDashboard({
               </CardContent>
             </Card>
 
-            <Card className="bg-white shadow-sm" id="kode-join">
+            <Card className="bg-card shadow-sm" id="kode-join">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Salin ke Grup</CardTitle>
                 <CardDescription>
@@ -577,7 +577,7 @@ async function MemberDashboard({
             }
           />
 
-          <Card className="border-0 bg-[linear-gradient(135deg,#6758c9_0%,#536cc5_48%,#1d8065_100%)] text-white shadow-xl shadow-indigo-900/15 ring-0">
+          <Card className="border-0 bg-[linear-gradient(135deg,#0f5f4a_0%,#157a5f_52%,#1d8065_100%)] text-white shadow-xl shadow-emerald-900/25 ring-0">
             <CardHeader className="p-4 md:p-6">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -605,7 +605,7 @@ async function MemberDashboard({
                 <Link
                   className={cn(
                     buttonVariants({ size: "sm", variant: "secondary" }),
-                    "bg-white text-indigo-800 hover:bg-white/90",
+                    "bg-white text-emerald-800 hover:bg-white/90",
                   )}
                   href={`/app/arisan/${arisanId}/bayar`}
                 >
@@ -622,16 +622,16 @@ async function MemberDashboard({
 
               return (
                 <Card
-                  className="rounded-xl border border-white/80 bg-white p-4 shadow-sm ring-0"
+                  className="rounded-xl border border-border bg-card p-4 shadow-sm ring-0"
                   key={item.label}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-zinc-500">
+                    <p className="text-xs font-medium text-muted-foreground">
                       {item.label}
                     </p>
-                    <Icon className="size-4 text-emerald-700" />
+                    <Icon className="size-4 text-primary" />
                   </div>
-                  <p className="mt-2 text-lg font-semibold tracking-tight text-zinc-950 md:text-xl">
+                  <p className="mt-2 text-lg font-semibold tracking-tight text-foreground md:text-xl">
                     {item.value}
                   </p>
                 </Card>
@@ -640,7 +640,7 @@ async function MemberDashboard({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Rekening Admin</CardTitle>
                 <CardDescription>
@@ -648,18 +648,18 @@ async function MemberDashboard({
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
-                <div className="flex gap-3 rounded-xl bg-emerald-50 p-4">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-emerald-700 shadow-sm">
+                <div className="flex gap-3 rounded-xl bg-success-surface p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-card text-success-foreground shadow-sm">
                     <Landmark className="size-5" />
                   </div>
-                  <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-emerald-950">
+                  <p className="whitespace-pre-wrap text-sm font-medium leading-6 text-success-foreground">
                     {dashboard.group.bankAccountText ?? "Belum diisi"}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white shadow-sm">
+            <Card className="bg-card shadow-sm">
               <CardHeader className="p-4 md:p-6">
                 <CardTitle>Status Pembayaran</CardTitle>
                 <CardAction>
@@ -685,17 +685,17 @@ async function MemberDashboard({
                   </Link>
                 ) : null}
                 {dashboard.payment?.status === "pending" ? (
-                  <Alert className="border-amber-200 bg-amber-50">
-                    <Clock3 className="text-amber-700" />
-                    <AlertDescription className="text-amber-800">
+                  <Alert className="border-warning-border bg-warning-surface">
+                    <Clock3 className="text-warning-foreground" />
+                    <AlertDescription className="text-warning-foreground">
                       Bukti kamu sedang dicek admin.
                     </AlertDescription>
                   </Alert>
                 ) : null}
                 {isPaidStatus(dashboard.payment?.status) ? (
-                  <Alert className="border-emerald-200 bg-emerald-50">
-                    <CheckCircle2 className="text-emerald-700" />
-                    <AlertDescription className="text-emerald-800">
+                  <Alert className="border-success-border bg-success-surface">
+                    <CheckCircle2 className="text-success-foreground" />
+                    <AlertDescription className="text-success-foreground">
                       Pembayaran kamu sudah diterima admin.
                     </AlertDescription>
                   </Alert>

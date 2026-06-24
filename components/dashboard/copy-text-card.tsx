@@ -35,7 +35,7 @@ export function CopyTextCard({
   }
 
   return (
-    <Card className="bg-white shadow-sm">
+    <Card className="bg-card shadow-sm">
       <CardHeader className="p-4 md:p-6">
         <CardTitle>{title}</CardTitle>
         {description ? (
@@ -44,7 +44,7 @@ export function CopyTextCard({
       </CardHeader>
       <CardContent className="space-y-3 px-4 pb-4 md:px-6 md:pb-6">
         <Textarea
-          className="min-h-32 resize-none bg-zinc-50 text-sm leading-6"
+          className="min-h-32 resize-none bg-muted/50 text-sm leading-6"
           readOnly
           value={text}
         />

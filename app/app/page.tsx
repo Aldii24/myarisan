@@ -29,10 +29,10 @@ export default async function AppPage() {
       <div className="grid min-h-[calc(100vh-4rem)] items-center gap-6 py-8 lg:grid-cols-[1fr_1fr]">
         <GlassPanel className="p-7 lg:p-9" variant="elevated">
           <BrandLogo />
-          <h1 className="mt-10 text-4xl font-semibold leading-tight tracking-tight text-zinc-950">
+          <h1 className="mt-10 text-4xl font-semibold leading-tight tracking-tight text-foreground">
             Belum ada arisan yang terhubung.
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-600">
+          <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
             Akun {user.name ?? user.phone} belum masuk ke arisan mana pun. Buat
             arisan baru untuk mulai mencatat anggota, setoran, bukti bayar, dan
             rekap.

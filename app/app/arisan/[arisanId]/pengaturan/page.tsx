@@ -1,8 +1,11 @@
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { ButtonLink, EmptyState, GlassPanel } from "@/components/ui/app-ui";
+import { formatDateTimeLabel } from "@/lib/arisan";
 import { getArisanSettings } from "@/lib/arisan-settings";
 import { requireArisanAdmin } from "@/lib/auth/user";
+import { getPackageStatus, isSubscriptionActive } from "@/lib/subscription";
 
+import { DeleteArisan } from "./delete-arisan";
 import { SettingsForm } from "./settings-form";
 
 export default async function PengaturanPage({
@@ -32,6 +35,7 @@ export default async function PengaturanPage({
   }
 
   const settings = await getArisanSettings(arisanId);
+  const hasActivePackage = await isSubscriptionActive(arisanId);
 
   if (!settings) {
     return (
@@ -63,6 +67,36 @@ export default async function PengaturanPage({
           periodLabel={settings.periodType === "weekly" ? "Mingguan" : "Bulanan"}
         />
       </GlassPanel>
+      {hasActivePackage ? (
+        <ActivePackageNotice arisanId={arisanId} />
+      ) : (
+        <DeleteArisan arisanId={arisanId} arisanName={settings.name} />
+      )}
     </>
+  );
+}
+
+async function ActivePackageNotice({ arisanId }: { arisanId: string }) {
+  const status = await getPackageStatus(arisanId);
+
+  return (
+    <div className="mt-6 rounded-3xl border border-amber-200 bg-amber-50/70 p-5">
+      <h2 className="text-base font-semibold text-amber-900">Paket Masih Aktif</h2>
+      <p className="mt-1 text-sm text-amber-800">
+        Arisan ini masih punya paket aktif sampai{" "}
+        <span className="font-semibold">
+          {formatDateTimeLabel(status.activeUntil)}
+        </span>
+        . Menghapus arisan akan membuang sisa paket yang sudah dibayar. Lebih
+        baik buat periode baru untuk terus memakai paketnya.
+      </p>
+      <ButtonLink
+        className="mt-4"
+        href={`/app/arisan/${arisanId}/giliran`}
+        variant="primary"
+      >
+        Buat periode baru
+      </ButtonLink>
+    </div>
   );
 }

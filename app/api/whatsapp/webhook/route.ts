@@ -13,6 +13,9 @@ import { processInboundWhatsAppText } from "@/lib/whatsapp/process-inbound";
 import { sendWhatsAppText } from "@/lib/whatsapp/send-message";
 
 export const runtime = "nodejs";
+// Payment-proof OCR/AI is deferred to `after()`; allow time for that background
+// work so the webhook itself still returns fast.
+export const maxDuration = 60;
 
 const processingFailureReply =
   "Maaf, bukti/pesan belum bisa diproses. Coba kirim ulang atau cek dashboard MyArisan.";

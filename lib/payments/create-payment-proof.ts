@@ -1,7 +1,8 @@
 import "server-only";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 
 import { db } from "@/db";
 import {
@@ -11,10 +12,7 @@ import {
   payments,
   periods,
 } from "@/db/schema";
-import {
-  parsePaymentProofWithAI,
-  type ParsedPaymentProof,
-} from "@/lib/ai/payment-proof-parser";
+import { parsePaymentProofWithAI } from "@/lib/ai/payment-proof-parser";
 import { isPaidStatus } from "@/lib/arisan";
 import { extractTextFromImage } from "@/lib/ocr";
 import {
@@ -90,22 +88,6 @@ export type CreatePaymentProofResult =
       error: string;
       ok: false;
     };
-
-function paymentReadFailed(result: ParsedPaymentProof) {
-  return (
-    result.confidence === 0 &&
-    !result.detectedAmount &&
-    result.warnings.some((warning) => {
-      const normalized = warning.toLocaleLowerCase("id-ID");
-
-      return (
-        warning.includes("DEEPSEEK_API_KEY") ||
-        normalized.includes("ai") ||
-        normalized.includes("ocr")
-      );
-    })
-  );
-}
 
 export async function createPaymentProofFromUpload(input: {
   amount?: number | null;
@@ -258,22 +240,6 @@ export async function createPaymentProofFromUpload(input: {
     duplicateWarnings.push("Nominal sama dengan bukti sebelumnya.");
   }
 
-  const [sameHashPayment] = await db
-    .select({ id: payments.id })
-    .from(payments)
-    .where(
-      and(
-        eq(payments.arisanGroupId, input.arisanId),
-        eq(payments.proofImageHash, storedFile.hash),
-      ),
-    )
-    .orderBy(desc(payments.createdAt))
-    .limit(1);
-
-  if (sameHashPayment && sameHashPayment.id !== existingPayment?.id) {
-    duplicateWarnings.push("Gambar bukti ini sama dengan bukti yang pernah diunggah.");
-  }
-
   const memberRows = await db
     .select({ displayName: memberships.displayName })
     .from(memberships)
@@ -284,52 +250,43 @@ export async function createPaymentProofFromUpload(input: {
       ),
     );
   const note = input.note?.trim() || null;
-  const ocrText = await extractTextFromImage(
-    Buffer.from(await input.file.arrayBuffer()),
-  );
-  const aiResult = await parsePaymentProofWithAI({
-    activePeriodName: activePeriod.name,
-    arisanAmountPerPeriod: group.amountPerPeriod,
-    duplicateWarnings,
-    memberDisplayName: membership.displayName,
-    memberNames: memberRows.map((member) => member.displayName),
-    note,
-    ocrText,
-    submittedAmount: amount,
-  });
+  const proofBytes = Buffer.from(await input.file.arrayBuffer());
 
-  // Authoritative duplicate check across the whole arisan, using both the image
-  // hash and the AI-read reference number / sender name. Suspected duplicates
-  // never auto-confirm — they go to a dedicated admin-review status.
-  const duplicateMatch = await findDuplicatePayment({
+  // Synchronous duplicate check by image hash only — a cheap DB query that gives
+  // an immediate signal when the exact same screenshot was already uploaded. The
+  // AI-driven reference/sender checks run later in enrichPaymentProof.
+  const hashDuplicate = await findDuplicatePayment({
     amount,
     arisanId: input.arisanId,
-    detectedReferenceNo: aiResult.detectedReferenceNo,
-    detectedSenderName: aiResult.detectedSenderName,
+    detectedReferenceNo: null,
+    detectedSenderName: null,
     excludePaymentId: existingPayment?.id ?? null,
     memberUserId: input.userId,
     periodId: activePeriod.id,
     proofImageHash: storedFile.hash,
   });
-  const isDuplicate = Boolean(duplicateMatch);
-  const duplicateOfPaymentId = duplicateMatch?.paymentId ?? null;
+  const isDuplicate = Boolean(hashDuplicate);
+  const duplicateOfPaymentId = hashDuplicate?.paymentId ?? null;
+  const syncWarnings = hashDuplicate
+    ? Array.from(
+        new Set([
+          ...duplicateWarnings,
+          duplicateNotice,
+          ...hashDuplicate.reasons.map((reason) => duplicateReasonLabels[reason]),
+        ]),
+      )
+    : duplicateWarnings;
 
-  if (duplicateMatch) {
-    aiResult.warnings = Array.from(
-      new Set([
-        ...aiResult.warnings,
-        duplicateNotice,
-        ...duplicateMatch.reasons.map((reason) => duplicateReasonLabels[reason]),
-      ]),
-    );
-  }
-
+  // Persist the payment NOW, before any OCR/AI. The heavy reading runs in the
+  // background (see enrichPaymentProof). This is what makes the request return
+  // in ~1-2s instead of timing out (504) during OCR on serverless hosts, while
+  // still guaranteeing the proof is recorded and the admin is notified.
   const values = {
-    aiResultJson: aiResult as unknown as Record<string, unknown>,
+    aiResultJson: null,
     amount,
     duplicateOfPaymentId,
     note,
-    ocrText,
+    ocrText: null,
     proofImageHash: storedFile.hash,
     proofImageUrl: storedFile.publicPath,
     status: isDuplicate ? ("duplicate_check" as const) : ("pending" as const),
@@ -390,11 +347,31 @@ export async function createPaymentProofFromUpload(input: {
   revalidatePath(`/app/arisan/${input.arisanId}/bayar`);
   revalidatePath(`/app/arisan/${input.arisanId}/payments`);
 
+  // Read the proof image (OCR) and parse it (AI) AFTER the response is sent.
+  // On Vercel `after` extends the invocation via waitUntil up to the route's
+  // maxDuration; failures here are logged and never affect the recorded payment.
+  after(() =>
+    enrichPaymentProof({
+      activePeriodName: activePeriod.name,
+      arisanAmountPerPeriod: group.amountPerPeriod,
+      arisanId: input.arisanId,
+      baseDuplicateWarnings: duplicateWarnings,
+      memberDisplayName: membership.displayName,
+      memberNames: memberRows.map((member) => member.displayName),
+      memberUserId: input.userId,
+      note,
+      paymentId,
+      periodId: activePeriod.id,
+      proofBytes,
+      submittedAmount: amount,
+    }),
+  );
+
   return {
     adminUserId: group.adminUserId,
     arisanName: group.name,
-    automaticReadFailed: paymentReadFailed(aiResult),
-    detectedAmount: aiResult.detectedAmount,
+    automaticReadFailed: false,
+    detectedAmount: null,
     duplicateOfPaymentId,
     isDuplicate,
     memberDisplayName: membership.displayName,
@@ -402,8 +379,96 @@ export async function createPaymentProofFromUpload(input: {
     ok: true,
     paymentId,
     status: isDuplicate ? "duplicate_check" : "pending",
-    warnings: paymentReadFailed(aiResult)
-      ? Array.from(new Set([...aiResult.warnings, "Bukti perlu dicek manual."]))
-      : aiResult.warnings,
+    warnings: syncWarnings,
   };
+}
+
+// Best-effort OCR + AI enrichment of a stored payment proof. Runs in the
+// background (via `after`) so it never blocks or fails the user's submission.
+// Re-reads the payment and only writes back if it is still awaiting review, so a
+// concurrent admin confirm/reject is never overwritten.
+export async function enrichPaymentProof(input: {
+  activePeriodName: string | null;
+  arisanAmountPerPeriod: number;
+  arisanId: string;
+  baseDuplicateWarnings: string[];
+  memberDisplayName: string;
+  memberNames: string[];
+  memberUserId: string;
+  note: string | null;
+  paymentId: string;
+  periodId: string;
+  proofBytes: Buffer;
+  submittedAmount: number;
+}) {
+  try {
+    const [current] = await db
+      .select({
+        proofImageHash: payments.proofImageHash,
+        status: payments.status,
+      })
+      .from(payments)
+      .where(eq(payments.id, input.paymentId))
+      .limit(1);
+
+    if (
+      !current ||
+      (current.status !== "pending" && current.status !== "duplicate_check")
+    ) {
+      return;
+    }
+
+    const ocrText = await extractTextFromImage(input.proofBytes);
+    const aiResult = await parsePaymentProofWithAI({
+      activePeriodName: input.activePeriodName,
+      arisanAmountPerPeriod: input.arisanAmountPerPeriod,
+      duplicateWarnings: input.baseDuplicateWarnings,
+      memberDisplayName: input.memberDisplayName,
+      memberNames: input.memberNames,
+      note: input.note,
+      ocrText,
+      submittedAmount: input.submittedAmount,
+    });
+
+    // Authoritative duplicate check across the whole arisan, now using the
+    // AI-read reference number / sender name on top of the image hash.
+    const duplicateMatch = await findDuplicatePayment({
+      amount: input.submittedAmount,
+      arisanId: input.arisanId,
+      detectedReferenceNo: aiResult.detectedReferenceNo,
+      detectedSenderName: aiResult.detectedSenderName,
+      excludePaymentId: input.paymentId,
+      memberUserId: input.memberUserId,
+      periodId: input.periodId,
+      proofImageHash: current.proofImageHash,
+    });
+    const isDuplicate = Boolean(duplicateMatch);
+
+    if (duplicateMatch) {
+      aiResult.warnings = Array.from(
+        new Set([
+          ...aiResult.warnings,
+          duplicateNotice,
+          ...duplicateMatch.reasons.map((reason) => duplicateReasonLabels[reason]),
+        ]),
+      );
+    }
+
+    await db
+      .update(payments)
+      .set({
+        aiResultJson: aiResult as unknown as Record<string, unknown>,
+        duplicateOfPaymentId: duplicateMatch?.paymentId ?? null,
+        ocrText,
+        status: isDuplicate ? "duplicate_check" : "pending",
+      })
+      .where(
+        and(
+          eq(payments.id, input.paymentId),
+          inArray(payments.status, ["pending", "duplicate_check"]),
+        ),
+      );
+  } catch (error) {
+    console.error("Failed to enrich payment proof", input.paymentId, error);
+  }
 }

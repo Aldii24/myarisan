@@ -57,8 +57,6 @@ export async function uploadPaymentProofAction(
     detectedAmount: result.detectedAmount,
     hasAiWarning: result.warnings.length > 0,
     status: "Menunggu Dicek Admin",
-    success: result.automaticReadFailed
-      ? "Bukti berhasil dikirim, tapi sistem belum bisa membaca otomatis. Admin tetap bisa mengecek manual."
-      : "Bukti berhasil dikirim.",
+    success: "Bukti berhasil dikirim. Sedang diperiksa otomatis, admin akan mengecek.",
   };
 }

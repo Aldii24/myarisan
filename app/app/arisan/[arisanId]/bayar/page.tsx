@@ -16,6 +16,10 @@ import { canUseAutomaticProof } from "@/lib/subscription";
 
 import { UploadPaymentForm } from "./upload-payment-form";
 
+// The upload Server Action defers OCR/AI to `after()`; give that background work
+// room to finish on the platform (it no longer blocks the response).
+export const maxDuration = 60;
+
 export default async function BayarPage({
   params,
 }: {

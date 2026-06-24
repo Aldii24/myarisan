@@ -1,5 +1,7 @@
 import "server-only";
 
+import { tmpdir } from "node:os";
+
 import { createWorker, type Worker } from "tesseract.js";
 
 const ocrLanguages = "ind+eng";
@@ -9,7 +11,13 @@ let workerPromise: Promise<Worker> | null = null;
 
 async function getWorker() {
   if (!workerPromise) {
-    workerPromise = createWorker(ocrLanguages).catch((error) => {
+    // tesseract.js caches downloaded language data to `cachePath` (default cwd).
+    // On serverless hosts like Vercel the cwd is read-only, so writing the
+    // traineddata there throws EROFS and OCR never works. Point it at the OS
+    // temp dir (/tmp on Vercel), the only writable location.
+    workerPromise = createWorker(ocrLanguages, undefined, {
+      cachePath: tmpdir(),
+    }).catch((error) => {
       workerPromise = null;
       throw error;
     });

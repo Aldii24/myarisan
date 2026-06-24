@@ -25,7 +25,10 @@ const { db } = createFakeDb((ctx: FakeDbContext) => {
   return respond(ctx);
 });
 
-const dispatch = mock.fn(async () => "REPLY_FOR_COMMAND");
+const dispatch = mock.fn(
+  async (_input: { command: { name: string }; userId: string }) =>
+    "REPLY_FOR_COMMAND",
+);
 
 type Tables = typeof import("@/db/schema");
 let schema: Tables;

@@ -13,6 +13,7 @@ import { handlePaketInput } from "./handle-paket";
 import { handlePengaturanInput } from "./handle-pengaturan";
 import { handlePeriodeInput } from "./handle-periode";
 import { handleResetPinInput } from "./handle-reset-pin";
+import { handleSelectArisanInput } from "./handle-select-arisan";
 import {
   recordInboundWhatsAppMessage,
   updateInboundWhatsAppStatus,
@@ -54,7 +55,13 @@ export async function processInboundWhatsAppText(input: {
     let command: WhatsAppCommand | null = null;
     let reply: string;
 
-    if (pendingAction?.action === "reset_pin") {
+    if (pendingAction?.action === "select_arisan") {
+      reply = await handleSelectArisanInput(
+        inbound.userId,
+        input.text,
+        pendingAction,
+      );
+    } else if (pendingAction?.action === "reset_pin") {
       reply = await handleResetPinInput(inbound.userId, input.text);
     } else if (pendingAction?.action === "create_arisan") {
       reply = await handleCreateArisanInput(

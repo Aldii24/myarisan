@@ -5,7 +5,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { arisanGroups } from "@/db/schema";
 import { formatRupiah } from "@/lib/arisan";
-import type { getUserMemberships } from "@/lib/auth/user";
 import {
   confirmPaymentById,
   expiredConfirmationMessage,
@@ -18,8 +17,6 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
-
-type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai"]);
 
@@ -72,22 +69,15 @@ async function getGroupAmount(arisanId: string) {
   return group?.amountPerPeriod ?? 0;
 }
 
-export async function beginKonfirmasi(userId: string, memberships: Membership[]) {
-  const admins = memberships.filter((membership) => membership.role === "admin");
-
-  if (admins.length === 0) {
-    return "Perintah ini hanya untuk admin arisan.";
-  }
-
-  if (admins.length > 1) {
-    return `Kamu mengelola beberapa arisan. Buka dashboard untuk konfirmasi bukti per arisan.`;
-  }
-
-  const arisanId = admins[0].arisanGroupId;
+export async function beginKonfirmasi(
+  userId: string,
+  arisanId: string,
+  arisanName: string,
+) {
   const pending = await getPendingPaymentsForArisan(arisanId);
 
   if (pending.length === 0) {
-    return `Tidak ada bukti yang menunggu dicek di ${admins[0].arisanName}.`;
+    return `Tidak ada bukti yang menunggu dicek di ${arisanName}.`;
   }
 
   const items = buildItems(pending);

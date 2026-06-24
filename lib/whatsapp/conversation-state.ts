@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 
 export type PendingAction =
+  | "select_arisan"
   | "reset_pin"
   | "create_arisan"
   | "confirm_payment"

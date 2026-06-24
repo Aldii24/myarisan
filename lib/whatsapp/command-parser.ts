@@ -1,5 +1,6 @@
 export type WhatsAppCommand =
   | { name: "anggota" }
+  | { name: "arisan" }
   | { name: "bantuan" }
   | { name: "bayar" }
   | { name: "belum-bayar" }
@@ -25,6 +26,9 @@ export type WhatsAppCommand =
 // Multi-word and single-word exact-match commands. Kept rule-based per PRD §13.3.
 const exactCommands: Record<string, WhatsAppCommand> = {
   anggota: { name: "anggota" },
+  arisan: { name: "arisan" },
+  "ganti arisan": { name: "arisan" },
+  "pilih arisan": { name: "arisan" },
   bantuan: { name: "bantuan" },
   bayar: { name: "bayar" },
   "belum bayar": { name: "belum-bayar" },

@@ -1,0 +1,2 @@
+ALTER TABLE "users" ADD COLUMN "active_arisan_id" uuid;--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_active_arisan_id_arisan_groups_id_fk" FOREIGN KEY ("active_arisan_id") REFERENCES "public"."arisan_groups"("id") ON DELETE set null ON UPDATE no action;

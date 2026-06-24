@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   date,
   index,
@@ -126,6 +127,12 @@ export const users = pgTable(
     pendingActionExpiresAt: timestamp("pending_action_expires_at", {
       withTimezone: true,
     }),
+    // The arisan a multi-group WhatsApp user last selected; context commands
+    // target this group so the bot doesn't re-ask on every message.
+    activeArisanId: uuid("active_arisan_id").references(
+      (): AnyPgColumn => arisanGroups.id,
+      { onDelete: "set null" },
+    ),
     ...timestamps(),
   },
   (table) => [

@@ -1,7 +1,6 @@
 import "server-only";
 
 import { formatDateLabel } from "@/lib/arisan";
-import type { getUserMemberships } from "@/lib/auth/user";
 import { getPeriodOverview, startNextPeriod } from "@/lib/periods";
 
 import {
@@ -9,8 +8,6 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
-
-type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
 type PeriodeData = {
   arisanId: string;
@@ -20,18 +17,11 @@ type PeriodeData = {
 const cancelKeywords = new Set(["batal", "cancel", "tidak", "no", "selesai"]);
 const confirmKeywords = new Set(["ya", "yes", "lanjut", "ok", "oke"]);
 
-export async function beginPeriode(userId: string, memberships: Membership[]) {
-  const admins = memberships.filter((membership) => membership.role === "admin");
-
-  if (admins.length === 0) {
-    return "Perintah ini hanya untuk admin arisan.";
-  }
-
-  if (admins.length > 1) {
-    return "Kamu mengelola beberapa arisan. Buka dashboard untuk mengatur periode per arisan.";
-  }
-
-  const arisanId = admins[0].arisanGroupId;
+export async function beginPeriode(
+  userId: string,
+  arisanId: string,
+  arisanName: string,
+) {
   const overview = await getPeriodOverview(arisanId);
 
   if (!overview) {
@@ -40,10 +30,10 @@ export async function beginPeriode(userId: string, memberships: Membership[]) {
 
   await setPendingAction(userId, "manage_period", {
     arisanId,
-    arisanName: admins[0].arisanName,
+    arisanName,
   } satisfies PeriodeData);
 
-  const lines = [`Kelola periode ${admins[0].arisanName}`];
+  const lines = [`Kelola periode ${arisanName}`];
 
   if (overview.activePeriod) {
     lines.push(

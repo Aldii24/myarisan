@@ -9,6 +9,7 @@ import {
   clearPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose } from "./format";
 import { handleWhatsAppCommand } from "./handle-command";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai"]);
@@ -23,7 +24,7 @@ export async function handleSelectArisanInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Dibatalkan.";
+    return "👍 Dibatalkan.";
   }
 
   const data = state.data as SelectArisanData;
@@ -31,9 +32,10 @@ export async function handleSelectArisanInput(
   const choice = Number(trimmed.replace(/\D/g, ""));
 
   if (!Number.isInteger(choice) || choice < 1 || choice > candidates.length) {
-    return `Balas dengan nomor 1 sampai ${candidates.length}, atau ketik BATAL.
-
-${buildSelectPrompt(candidates)}`;
+    return compose(
+      `⚠️ Balas dengan ${bold(`nomor 1 sampai ${candidates.length}`)}, atau ketik BATAL.`,
+      buildSelectPrompt(candidates),
+    );
   }
 
   const selected = candidates[choice - 1];
@@ -48,12 +50,10 @@ ${buildSelectPrompt(candidates)}`;
     userId,
   });
 
-  // The menu reply already states the active arisan, so don't repeat it.
-  if (reply.startsWith("Arisan aktif")) {
+  // If the re-run reply already names the active arisan, don't repeat it.
+  if (reply.includes("Arisan aktif")) {
     return reply;
   }
 
-  return `Arisan aktif: ${selected.arisanName}
-
-${reply}`;
+  return compose(`✅ ${bold(`Arisan aktif: ${selected.arisanName}`)}`, reply);
 }

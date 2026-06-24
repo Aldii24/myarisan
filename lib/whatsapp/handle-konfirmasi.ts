@@ -17,6 +17,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, footer, header } from "./format";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai"]);
 
@@ -52,11 +53,14 @@ function renderList(items: KonfirmasiItem[]) {
     .join("\n");
 }
 
-function selectPrompt(items: KonfirmasiItem[]) {
-  return `${items.length} bukti menunggu dicek:
-${renderList(items)}
-
-Balas nomor untuk memproses, atau ketik SELESAI untuk berhenti.`;
+function selectPrompt(items: KonfirmasiItem[], prefix?: string) {
+  return compose(
+    prefix ?? null,
+    header("✅", "Konfirmasi Bukti"),
+    `Ada ${bold(`${items.length} bukti`)} menunggu dicek:`,
+    renderList(items),
+    footer("Balas NOMOR untuk memproses, atau SELESAI untuk berhenti."),
+  );
 }
 
 async function getGroupAmount(arisanId: string) {
@@ -77,7 +81,10 @@ export async function beginKonfirmasi(
   const pending = await getPendingPaymentsForArisan(arisanId);
 
   if (pending.length === 0) {
-    return `Tidak ada bukti yang menunggu dicek di ${arisanName}.`;
+    return compose(
+      header("✅", "Konfirmasi Bukti", arisanName),
+      "🎉 Tidak ada bukti yang menunggu dicek saat ini.",
+    );
   }
 
   const items = buildItems(pending);
@@ -102,7 +109,7 @@ export async function handleKonfirmasiInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Konfirmasi bukti dihentikan.";
+    return "👍 Konfirmasi bukti dihentikan.";
   }
 
   const data = state.data as KonfirmasiData;
@@ -115,7 +122,7 @@ export async function handleKonfirmasiInput(
       choice < 1 ||
       choice > data.items.length
     ) {
-      return `Balas dengan nomor 1 sampai ${data.items.length}, atau ketik SELESAI untuk berhenti.`;
+      return `⚠️ Balas dengan nomor 1 sampai ${data.items.length}, atau ketik SELESAI untuk berhenti.`;
     }
 
     const selected = data.items[choice - 1];
@@ -126,8 +133,13 @@ export async function handleKonfirmasiInput(
       step: "decide",
     } satisfies KonfirmasiData);
 
-    return `${selected.label}
-Balas TERIMA untuk konfirmasi, TERIMA <nominal> untuk ubah nominal, atau TOLAK.`;
+    return compose(
+      header("✅", "Proses Bukti"),
+      `🧾 ${bold(selected.label)}`,
+      footer(
+        "Balas TERIMA untuk konfirmasi · TERIMA <nominal> untuk ubah nominal · TOLAK untuk menolak.",
+      ),
+    );
   }
 
   // step === "decide"
@@ -180,14 +192,15 @@ Balas TERIMA untuk konfirmasi, TERIMA <nominal> untuk ubah nominal, atau TOLAK.`
     return "Bukti tidak ditemukan lagi. Ketik KONFIRMASI untuk mulai lagi.";
   }
 
-  const decision =
-    result === "confirmed" ? "dikonfirmasi ✅" : "ditolak.";
+  const decisionText =
+    result === "confirmed"
+      ? `✅ Pembayaran ${bold(selected.label)} dikonfirmasi.`
+      : `🚫 Pembayaran ${bold(selected.label)} ditolak.`;
   const remaining = await getPendingPaymentsForArisan(data.arisanId);
 
   if (remaining.length === 0) {
     await clearPendingAction(userId);
-    return `Pembayaran ${selected.label} ${decision}
-Semua bukti sudah diproses.`;
+    return `${decisionText}\n\n🎉 Semua bukti sudah diproses.`;
   }
 
   const items = buildItems(remaining);
@@ -199,7 +212,5 @@ Semua bukti sudah diproses.`;
     step: "select",
   } satisfies KonfirmasiData);
 
-  return `Pembayaran ${selected.label} ${decision}
-
-${selectPrompt(items)}`;
+  return selectPrompt(items, decisionText);
 }

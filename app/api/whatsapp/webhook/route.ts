@@ -18,7 +18,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const processingFailureReply =
-  "Maaf, bukti/pesan belum bisa diproses. Coba kirim ulang atau cek dashboard MyArisan.";
+  "⚠️ Maaf, pesan/bukti kamu belum bisa diproses. Coba kirim ulang sebentar lagi, atau buka dashboard MyArisan ya 🙏";
 
 type MetaContact = {
   profile?: { name?: string };

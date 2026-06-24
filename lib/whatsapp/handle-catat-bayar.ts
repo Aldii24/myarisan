@@ -12,6 +12,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, footer, header } from "./format";
 
 type RecordPaymentItem = {
   userId: string;
@@ -40,12 +41,12 @@ function renderList(items: RecordPaymentItem[]) {
 }
 
 function selectPrompt(items: RecordPaymentItem[], prefix?: string) {
-  const body = `Catat pembayaran manual
-${renderList(items)}
-
-Balas nomor anggota untuk catat pembayaran, atau SELESAI untuk berhenti.`;
-
-  return [prefix, body].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ?? null,
+    header("💸", "Catat Pembayaran"),
+    renderList(items),
+    footer("Balas NOMOR anggota untuk mencatat, atau SELESAI untuk berhenti."),
+  );
 }
 
 async function loadItems(arisanId: string): Promise<RecordPaymentItem[]> {
@@ -93,7 +94,7 @@ export async function handleCatatBayarInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Selesai mencatat pembayaran.";
+    return "👍 Selesai mencatat pembayaran.";
   }
 
   if (data.step === "amount") {
@@ -124,17 +125,16 @@ export async function handleCatatBayarInput(
       return result.error;
     }
 
-    const confirmation = `Pembayaran ${result.memberDisplayName} untuk ${
+    const confirmation = `✅ Pembayaran ${bold(result.memberDisplayName)} untuk ${
       result.periodName
-    } dicatat ✅ (${formatRupiah(result.amount)}).`;
+    } dicatat (${formatRupiah(result.amount)}).`;
 
     const items = await loadItems(data.arisanId);
     const remaining = items.filter((item) => !item.alreadyPaid);
 
     if (remaining.length === 0) {
       await clearPendingAction(userId);
-      return `${confirmation}
-Semua anggota sudah tercatat untuk periode ini.`;
+      return `${confirmation}\n\n🎉 Semua anggota sudah tercatat untuk periode ini.`;
     }
 
     await setPendingAction(userId, "record_payment", {

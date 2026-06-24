@@ -8,6 +8,7 @@ import type { getUserMemberships } from "@/lib/auth/user";
 
 import type { WhatsAppCommand } from "./command-parser";
 import { setPendingAction } from "./conversation-state";
+import { bold, compose, header } from "./format";
 
 type Membership = Awaited<ReturnType<typeof getUserMemberships>>[number];
 
@@ -66,8 +67,11 @@ export function buildSelectPrompt(candidates: SelectArisanCandidate[]) {
     )
     .join("\n");
 
-  return `Kamu punya beberapa arisan. Balas dengan nomor arisan:
-${list}`;
+  return compose(
+    header("🔄", "Pilih Arisan"),
+    `Kamu punya beberapa arisan. Balas dengan ${bold("nomor")} arisan:`,
+    list,
+  );
 }
 
 // Stores the selection flow and returns the numbered prompt. Used both by the
@@ -104,7 +108,11 @@ export async function resolveArisanContext(input: {
   if (memberships.length === 0) {
     return {
       kind: "none",
-      reply: "Kamu belum masuk ke arisan. Ketik JOIN <kode> untuk mulai.",
+      reply: compose(
+        header("🙋", "Gabung Arisan"),
+        "Kamu belum masuk ke arisan mana pun.",
+        `Ketik ${bold("JOIN <kode>")} untuk mulai.`,
+      ),
     };
   }
 
@@ -114,7 +122,13 @@ export async function resolveArisanContext(input: {
       : memberships;
 
   if (candidates.length === 0) {
-    return { kind: "none", reply: "Perintah ini hanya untuk admin arisan." };
+    return {
+      kind: "none",
+      reply: compose(
+        header("🔒", "Khusus Admin"),
+        "Perintah ini hanya untuk admin arisan.",
+      ),
+    };
   }
 
   if (candidates.length === 1) {

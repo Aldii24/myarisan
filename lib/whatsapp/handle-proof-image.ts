@@ -4,10 +4,10 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { arisanGroups, memberships, users } from "@/db/schema";
-import { formatRupiah } from "@/lib/arisan";
 import { createPaymentProofFromUpload } from "@/lib/payments/create-payment-proof";
 
 import { getWhatsAppConfig, reportMissingWhatsAppEnv } from "./config";
+import { compose, footer, header, italic } from "./format";
 import { sendWhatsAppText } from "./send-message";
 
 function getAppUrl() {
@@ -27,7 +27,7 @@ async function notifyAdmin(input: {
   paymentId: string;
 }) {
   const duplicateHint = input.isDuplicate
-    ? " Bukti ini mirip dengan pembayaran yang sudah pernah dikirim."
+    ? "\n⚠️ Bukti ini mirip dengan pembayaran yang sudah pernah dikirim."
     : "";
 
   const [admin] = await db
@@ -44,9 +44,12 @@ async function notifyAdmin(input: {
   }
 
   await sendWhatsAppText({
-    body: `Bukti pembayaran baru dari ${input.memberDisplayName} untuk ${input.arisanName}.
-Status: Menunggu Dicek.${duplicateHint}
-${getAppUrl()}/app/arisan/${input.arisanId}/payments/${input.paymentId}`,
+    body: compose(
+      header("📩", "Bukti Baru", input.arisanName),
+      `Ada bukti pembayaran baru dari *${input.memberDisplayName}*.`,
+      `📌 Status: *Menunggu Dicek*.${duplicateHint}`,
+      `📲 ${italic("Cek sekarang:")}\n${getAppUrl()}/app/arisan/${input.arisanId}/payments/${input.paymentId}`,
+    ),
     toPhone: admin.phone,
   });
 }
@@ -75,8 +78,11 @@ export async function handleWhatsAppProofImage(input: {
   if (memberMemberships.length === 0) {
     return {
       paymentId: null,
-      reply:
-        "Kamu belum terdaftar sebagai anggota arisan. Ketik JOIN <kode> atau buka dashboard untuk bergabung.",
+      reply: compose(
+        header("🙋", "Gabung Arisan"),
+        "Kamu belum terdaftar sebagai anggota arisan.",
+        "Ketik *JOIN <kode>* atau buka dashboard untuk bergabung.",
+      ),
       status: null,
     };
   }
@@ -84,8 +90,10 @@ export async function handleWhatsAppProofImage(input: {
   if (memberMemberships.length > 1) {
     return {
       paymentId: null,
-      reply:
-        "Kamu terdaftar di beberapa arisan. Agar bukti tidak masuk ke arisan yang salah, upload dari dashboard untuk sekarang.",
+      reply: compose(
+        header("📸", "Kirim Bukti"),
+        "Kamu terdaftar di beberapa arisan. Supaya bukti tidak masuk ke arisan yang salah, upload lewat dashboard dulu ya.",
+      ),
       status: null,
     };
   }
@@ -117,26 +125,23 @@ export async function handleWhatsAppProofImage(input: {
     });
   }
 
-  const replyParts = result.isDuplicate
-    ? [
-        "Bukti diterima, tapi mirip dengan pembayaran yang sudah pernah dikirim.",
-        "Status: perlu dicek admin.",
-      ]
-    : ["Bukti bayar diterima ✅ Status: menunggu dicek admin."];
-
-  if (result.detectedAmount) {
-    replyParts.push(`Nominal terbaca: ${formatRupiah(result.detectedAmount)}`);
-  }
-
-  if (!result.isDuplicate && result.warnings.length > 0) {
-    replyParts.push("Ada data yang perlu dicek admin.");
-  }
+  const reply = result.isDuplicate
+    ? compose(
+        header("🔍", "Perlu Dicek Admin"),
+        "Bukti kamu diterima, tapi mirip dengan pembayaran yang sudah pernah dikirim.",
+        footer("Admin akan mengecek dulu ya 🙏"),
+      )
+    : compose(
+        header("✅", "Bukti Diterima"),
+        "Bukti bayar kamu sudah masuk 🎉",
+        footer("Status: Menunggu Dicek Admin."),
+      );
 
   return {
     detectedAmount: result.detectedAmount,
     hasWarnings: result.warnings.length > 0,
     paymentId: result.paymentId,
-    reply: replyParts.join("\n"),
+    reply,
     status: result.status,
   };
 }

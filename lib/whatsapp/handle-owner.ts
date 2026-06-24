@@ -14,6 +14,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, field, footer, header, italic } from "./format";
 import { sendWhatsAppText } from "./send-message";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai"]);
@@ -64,12 +65,13 @@ function renderList(items: OwnerReviewItem[]) {
 }
 
 function selectPrompt(items: OwnerReviewItem[], prefix?: string) {
-  const body = `${items.length} bukti paket menunggu dicek:
-${renderList(items)}
-
-Balas nomor untuk memproses, atau ketik SELESAI untuk berhenti.`;
-
-  return [prefix, body].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ?? null,
+    header("🛡️", "Bukti Paket"),
+    `Ada ${bold(`${items.length} bukti paket`)} menunggu dicek:`,
+    renderList(items),
+    footer("Balas NOMOR untuk memproses, atau SELESAI untuk berhenti."),
+  );
 }
 
 // Sends the admin a heads-up about the owner's decision, but only inside the
@@ -82,10 +84,17 @@ async function notifyAdmin(input: {
   reason?: string | null;
 }) {
   const body = input.approved
-    ? `Paket ${input.planName} untuk ${input.arisanName} sudah aktif ✅ Terima kasih sudah membayar.`
-    : `Maaf, bukti paket ${input.planName} untuk ${input.arisanName} ditolak.${
-        input.reason ? ` Alasan: ${input.reason}` : ""
-      } Silakan upload ulang lewat PAKET.`;
+    ? compose(
+        header("🎉", "Paket Aktif", input.arisanName),
+        `Paket ${bold(input.planName)} sudah aktif. Terima kasih sudah membayar! 🙏`,
+      )
+    : compose(
+        header("⚠️", "Bukti Paket Ditolak", input.arisanName),
+        `Maaf, bukti paket ${bold(input.planName)} ditolak.${
+          input.reason ? `\nAlasan: ${input.reason}` : ""
+        }`,
+        footer("Silakan upload ulang lewat PAKET."),
+      );
 
   await sendWhatsAppText({ body, toPhone: input.adminPhone });
 }
@@ -94,13 +103,19 @@ async function notifyAdmin(input: {
 // awaiting verification and opens the select step.
 export async function beginOwnerReview(userId: string) {
   if (!(await isOwnerUserId(userId))) {
-    return "Perintah ini hanya untuk owner MyArisan.";
+    return compose(
+      header("🔒", "Khusus Owner"),
+      "Perintah ini hanya untuk owner MyArisan.",
+    );
   }
 
   const items = await loadItems();
 
   if (items.length === 0) {
-    return "Tidak ada bukti paket yang menunggu dicek saat ini.";
+    return compose(
+      header("🛡️", "Bukti Paket"),
+      "🎉 Tidak ada bukti paket yang menunggu dicek saat ini.",
+    );
   }
 
   await setPendingAction(userId, "manage_owner_review", {
@@ -121,7 +136,7 @@ export async function handleOwnerInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Selesai mengecek bukti paket.";
+    return "👍 Selesai mengecek bukti paket.";
   }
 
   const data = state.data as OwnerReviewData;
@@ -130,7 +145,7 @@ export async function handleOwnerInput(
     const choice = Number(trimmed.replace(/\D/g, ""));
 
     if (!Number.isInteger(choice) || choice < 1 || choice > data.items.length) {
-      return `Balas dengan nomor 1 sampai ${data.items.length}, atau ketik SELESAI untuk berhenti.`;
+      return `⚠️ Balas dengan nomor 1 sampai ${data.items.length}, atau ketik SELESAI untuk berhenti.`;
     }
 
     const selected = data.items[choice - 1];
@@ -141,13 +156,15 @@ export async function handleOwnerInput(
       step: "decide",
     } satisfies OwnerReviewData);
 
-    return `${selected.arisanName} - ${selected.planName} ${formatRupiah(
-      selected.amount,
-    )}
-Admin: ${selected.adminName ?? "Admin"} (${selected.adminPhone})
-Bukti: ${getAppUrl()}/owner
-
-Balas TERIMA untuk aktifkan paket, atau TOLAK (boleh tambah alasan: TOLAK <alasan>).`;
+    return compose(
+      header("🛡️", "Cek Bukti Paket", selected.arisanName),
+      [
+        field("💎", "Paket", `${selected.planName} · ${formatRupiah(selected.amount)}`),
+        field("👤", "Admin", `${selected.adminName ?? "Admin"} (${selected.adminPhone})`),
+      ].join("\n"),
+      `🖼️ ${italic("Lihat bukti:")}\n${getAppUrl()}/owner`,
+      footer("Balas TERIMA untuk aktifkan paket, atau TOLAK <alasan> untuk menolak."),
+    );
   }
 
   // step === "decide"
@@ -178,9 +195,9 @@ Balas TERIMA untuk aktifkan paket, atau TOLAK (boleh tambah alasan: TOLAK <alasa
       planName: result.planName,
     });
 
-    decisionText = `${selected.arisanName} - paket ${
+    decisionText = `✅ ${bold(selected.arisanName)} — paket ${
       result.planName
-    } aktif sampai ${formatDateTimeLabel(result.currentPeriodEnd)} ✅`;
+    } aktif sampai ${formatDateTimeLabel(result.currentPeriodEnd)}.`;
   } else if (normalized === "tolak" || normalized.startsWith("tolak ")) {
     const reason = trimmed.slice("tolak".length).trim() || null;
     const result = await rejectPackageInvoice({
@@ -202,17 +219,16 @@ Balas TERIMA untuk aktifkan paket, atau TOLAK (boleh tambah alasan: TOLAK <alasa
       reason,
     });
 
-    decisionText = `${selected.arisanName} - bukti paket ditolak.`;
+    decisionText = `🚫 ${bold(selected.arisanName)} — bukti paket ditolak.`;
   } else {
-    return "Balas TERIMA untuk aktifkan paket, atau TOLAK (boleh tambah alasan: TOLAK <alasan>).";
+    return "Balas *TERIMA* untuk aktifkan paket, atau *TOLAK <alasan>* untuk menolak.";
   }
 
   const remaining = await loadItems();
 
   if (remaining.length === 0) {
     await clearPendingAction(userId);
-    return `${decisionText}
-Semua bukti paket sudah diproses.`;
+    return `${decisionText}\n\n🎉 Semua bukti paket sudah diproses.`;
   }
 
   await setPendingAction(userId, "manage_owner_review", {

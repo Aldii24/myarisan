@@ -13,6 +13,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { compose, footer, header } from "./format";
 
 type AnggotaItem = {
   displayName: string;
@@ -28,11 +29,9 @@ type AnggotaData = {
 
 const cancelKeywords = new Set(["selesai", "batal", "cancel", "tidak", "no"]);
 
-const menuHelp = `Balas:
-- TAMBAH untuk menambah anggota
-- UBAH <nomor> untuk ganti nama
-- HAPUS <nomor> untuk hapus anggota
-- SELESAI untuk berhenti`;
+const menuHelp = footer(
+  "Balas: TAMBAH (tambah anggota) · UBAH <nomor> (ganti nama) · HAPUS <nomor> (hapus) · SELESAI (berhenti)",
+);
 
 async function renderMenu(userId: string, arisanId: string, prefix?: string) {
   const members = (await getArisanMembers(arisanId)).filter(
@@ -54,12 +53,16 @@ async function renderMenu(userId: string, arisanId: string, prefix?: string) {
       ? items.map((item, index) => `${index + 1}. ${item.displayName}`).join("\n")
       : "Belum ada anggota.";
 
-  const header = `Kelola anggota
-Jumlah anggota: ${items.length}
+  const body = `👥 Jumlah anggota: *${items.length}*
 
 ${list}`;
 
-  return [prefix, header, menuHelp].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ? `✅ ${prefix}` : null,
+    header("👥", "Kelola Anggota"),
+    body,
+    menuHelp,
+  );
 }
 
 export async function beginManageAnggota(userId: string, arisanId: string) {
@@ -77,7 +80,7 @@ export async function handleAnggotaInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Selesai mengatur anggota.";
+    return "👍 Selesai mengatur anggota.";
   }
 
   if (data.step === "add") {
@@ -130,7 +133,7 @@ export async function handleAnggotaInput(
       step: "add",
     } satisfies AnggotaData);
 
-    return "Kirim nama anggota. Boleh banyak, satu nama per baris.";
+    return "✍️ Kirim nama anggota. Boleh banyak sekaligus, satu nama per baris.";
   }
 
   const ubahMatch = normalized.match(/^ubah\s+(\d+)$/);
@@ -176,5 +179,5 @@ export async function handleAnggotaInput(
     return renderMenu(userId, data.arisanId, `${target.displayName} dihapus.`);
   }
 
-  return `Perintah tidak dikenali.\n\n${menuHelp}`;
+  return `⚠️ Perintah tidak dikenali.\n\n${menuHelp}`;
 }

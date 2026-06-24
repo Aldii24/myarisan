@@ -12,6 +12,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { compose, field, footer, header, italic } from "./format";
 
 type GiliranItem = {
   displayName: string;
@@ -25,12 +26,9 @@ type GiliranData = {
 
 const cancelKeywords = new Set(["selesai", "batal", "cancel", "tidak", "no"]);
 
-const actionHelp = `Balas:
-- Nomor untuk jadikan giliran bulan ini (mis. 2)
-- ACAK untuk mengacak urutan
-- NAIK <nomor> atau TURUN <nomor> untuk ubah urutan
-- HAPUS untuk kosongkan giliran
-- SELESAI untuk berhenti`;
+const actionHelp = footer(
+  "Balas: NOMOR (jadikan giliran sekarang) · ACAK (acak urutan) · NAIK <nomor> / TURUN <nomor> (ubah urutan) · HAPUS (kosongkan) · SELESAI (berhenti)",
+);
 
 // Render the current order from fresh data and persist the matching item list so
 // a replied number maps to exactly what was shown.
@@ -63,18 +61,22 @@ async function renderAndStore(
 
   const order = data.members
     .map((member, index) => {
-      const mark = member.isCurrentDraw ? " (giliran sekarang)" : "";
+      const mark = member.isCurrentDraw ? " ⭐" : "";
       return `${index + 1}. ${member.displayName}${mark}`;
     })
     .join("\n");
 
-  const header = `Atur giliran ${data.group.name}
-Giliran sekarang: ${data.currentDrawName ?? "Belum diatur"}
+  const body = compose(
+    field("⭐", "Giliran sekarang", data.currentDrawName ?? "Belum diatur"),
+    `${italic("Urutan:")}\n${order}`,
+  );
 
-Urutan:
-${order}`;
-
-  return [prefix, header, actionHelp].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ? `✅ ${prefix}` : null,
+    header("🎲", "Atur Giliran", data.group.name),
+    body,
+    actionHelp,
+  );
 }
 
 export async function beginManageGiliran(
@@ -108,7 +110,7 @@ export async function handleGiliranInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Pengaturan giliran selesai.";
+    return "👍 Pengaturan giliran selesai.";
   }
 
   if (normalized === "acak") {
@@ -182,5 +184,5 @@ export async function handleGiliranInput(
     );
   }
 
-  return `Perintah tidak dikenali.\n\n${actionHelp}`;
+  return `⚠️ Perintah tidak dikenali.\n\n${actionHelp}`;
 }

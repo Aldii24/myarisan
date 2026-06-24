@@ -14,6 +14,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, field, footer, header, italic } from "./format";
 
 const cancelKeywords = new Set(["batal", "cancel", "selesai", "tidak", "no"]);
 
@@ -57,27 +58,27 @@ function renderPlanList(plans: PaketPlanItem[]) {
 }
 
 function selectPrompt(data: PaketData, prefix?: string) {
-  const body = `Pilih paket untuk ${data.arisanName}:
-${renderPlanList(data.plans)}
-
-Balas nomor paket untuk lanjut bayar, atau ketik BATAL untuk berhenti.`;
-
-  return [prefix, body].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ?? null,
+    header("💎", "Pilih Paket", data.arisanName),
+    renderPlanList(data.plans),
+    footer("Balas NOMOR paket untuk lanjut bayar, atau BATAL untuk berhenti."),
+  );
 }
 
 function proofPrompt(data: PaketData) {
   const qris = qrisImageUrl();
   const qrisLine = qris
-    ? `QRIS MyArisan: ${qris}`
-    : `Buka QRIS di dashboard: ${getAppUrl()}/app/arisan/${data.arisanId}/paket/invoices/${data.invoiceId}`;
+    ? `📷 ${italic("QRIS MyArisan:")}\n${qris}`
+    : `📷 ${italic("Buka QRIS di dashboard:")}\n${getAppUrl()}/app/arisan/${data.arisanId}/paket/invoices/${data.invoiceId}`;
 
-  return `Tagihan ${data.planName} dibuat ✅
-Nominal: ${formatRupiah(data.amount ?? 0)} (aktif 30 hari)
-
-${qrisLine}
-
-Setelah transfer, kirim foto bukti pembayaran di chat ini. Paket aktif setelah dicek owner MyArisan.
-Ketik BATAL untuk berhenti.`;
+  return compose(
+    header("🧾", "Tagihan Dibuat", data.planName),
+    field("💰", "Nominal", `${formatRupiah(data.amount ?? 0)} (aktif 30 hari)`),
+    qrisLine,
+    "📸 Setelah transfer, kirim *foto bukti pembayaran* di chat ini. Paket aktif setelah dicek owner MyArisan.",
+    footer("Ketik BATAL untuk berhenti."),
+  );
 }
 
 async function loadPlans(): Promise<PaketPlanItem[]> {
@@ -101,19 +102,24 @@ export async function beginPaket(
   arisanName: string,
 ) {
   const status = await getPackageStatus(arisanId);
-  const statusSummary = `Paket ${arisanName}
-Paket saat ini: ${status.currentPlan.name}
-Status: ${status.status}
-Anggota: ${status.memberUsed}/${status.memberLimit}
-Baca bukti: ${status.proofUsed}/${status.proofLimit}
-Aktif sampai: ${formatDateTimeLabel(status.activeUntil)}`;
+  const statusSummary = compose(
+    header("💎", "Paket", arisanName),
+    [
+      field("📦", "Paket saat ini", status.currentPlan.name),
+      field("📌", "Status", status.status),
+      field("👥", "Anggota", `${status.memberUsed}/${status.memberLimit}`),
+      field("📸", "Baca bukti", `${status.proofUsed}/${status.proofLimit}`),
+      field("📅", "Aktif sampai", formatDateTimeLabel(status.activeUntil)),
+    ].join("\n"),
+  );
 
   const plans = await loadPlans();
 
   if (plans.length === 0) {
-    return `${statusSummary}
-
-Belum ada paket berbayar yang bisa dipilih. Buka dashboard: ${getAppUrl()}/app/arisan/${arisanId}/paket`;
+    return compose(
+      statusSummary,
+      `Belum ada paket berbayar yang bisa dipilih.\n📲 Buka dashboard: ${getAppUrl()}/app/arisan/${arisanId}/paket`,
+    );
   }
 
   const openInvoice = await getOpenPackageInvoice(arisanId);
@@ -131,12 +137,14 @@ Belum ada paket berbayar yang bisa dipilih. Buka dashboard: ${getAppUrl()}/app/a
       step: "await_proof",
     } satisfies PaketData);
 
-    return `${statusSummary}
-
-Masih ada tagihan ${plan?.name ?? "paket"} yang belum dibayar (${formatRupiah(
-      openInvoice.amount,
-    )}).
-Kirim foto bukti pembayaran di chat ini untuk menyelesaikannya, atau ketik BATAL untuk berhenti.`;
+    return compose(
+      statusSummary,
+      `🧾 Masih ada tagihan ${bold(plan?.name ?? "paket")} yang belum dibayar (${formatRupiah(
+        openInvoice.amount,
+      )}).`,
+      "📸 Kirim *foto bukti pembayaran* di chat ini untuk menyelesaikannya.",
+      footer("Ketik BATAL untuk berhenti."),
+    );
   }
 
   await setPendingAction(userId, "manage_package", {
@@ -168,18 +176,18 @@ export async function handlePaketInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Oke, dihentikan. Ketik PAKET kapan saja untuk atur paket lagi.";
+    return "👍 Oke, dihentikan. Ketik PAKET kapan saja untuk atur paket lagi.";
   }
 
   if (data.step === "await_proof") {
-    return "Kirim foto bukti pembayaran paket di chat ini, atau ketik BATAL untuk berhenti.";
+    return "📸 Kirim *foto bukti pembayaran* paket di chat ini, atau ketik BATAL untuk berhenti.";
   }
 
   // step === "select_plan"
   const choice = Number(trimmed.replace(/\D/g, ""));
 
   if (!Number.isInteger(choice) || choice < 1 || choice > data.plans.length) {
-    return `Balas dengan nomor 1 sampai ${data.plans.length}, atau ketik BATAL untuk berhenti.`;
+    return `⚠️ Balas dengan nomor 1 sampai ${data.plans.length}, atau ketik BATAL untuk berhenti.`;
   }
 
   const selected = data.plans[choice - 1];
@@ -217,7 +225,7 @@ export async function handlePaketProofImage(input: {
   const data = input.state.data as PaketData;
 
   if (data.step !== "await_proof" || !data.invoiceId) {
-    return "Belum ada tagihan paket yang menunggu bukti. Ketik PAKET untuk mulai.";
+    return "⚠️ Belum ada tagihan paket yang menunggu bukti. Ketik PAKET untuk mulai.";
   }
 
   const result = await attachInvoiceProof({
@@ -239,7 +247,9 @@ export async function handlePaketProofImage(input: {
 
   await clearPendingAction(input.userId);
 
-  return `Bukti pembayaran paket ${data.planName ?? ""} berhasil dikirim ✅
-Paket akan aktif setelah dicek owner MyArisan.
-Cek status: ${getAppUrl()}/app/arisan/${data.arisanId}/paket`;
+  return compose(
+    header("✅", "Bukti Paket Terkirim", data.planName ?? undefined),
+    "Bukti pembayaran berhasil dikirim. Paket akan aktif setelah dicek owner MyArisan.",
+    `📲 ${italic("Cek status:")}\n${getAppUrl()}/app/arisan/${data.arisanId}/paket`,
+  );
 }

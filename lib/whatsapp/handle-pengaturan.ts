@@ -12,6 +12,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { compose, footer, header } from "./format";
 
 type SettingsData = {
   arisanId: string;
@@ -50,15 +51,17 @@ async function renderMenu(userId: string, arisanId: string, prefix?: string) {
     step: "menu",
   } satisfies SettingsData);
 
-  const body = `Pengaturan ${settings.name}
-1. Nama: ${settings.name}
-2. Setoran: ${formatRupiah(settings.amountPerPeriod)}
-3. Batas setor: tanggal ${settings.dueDay}
-4. Rekening: ${settings.bankAccountText || "Belum diisi"}
+  const body = `1️⃣ Nama: *${settings.name}*
+2️⃣ Setoran: *${formatRupiah(settings.amountPerPeriod)}*
+3️⃣ Batas setor: *tanggal ${settings.dueDay}*
+4️⃣ Rekening: *${settings.bankAccountText || "Belum diisi"}*`;
 
-Balas nomor (1-4) untuk ubah, atau SELESAI untuk berhenti.`;
-
-  return [prefix, body].filter(Boolean).join("\n\n");
+  return compose(
+    prefix ? `✅ ${prefix}` : null,
+    header("⚙️", "Pengaturan", settings.name),
+    body,
+    footer("Balas nomor (1-4) untuk mengubah, atau SELESAI untuk berhenti."),
+  );
 }
 
 export async function beginPengaturan(userId: string, arisanId: string) {
@@ -76,7 +79,7 @@ export async function handlePengaturanInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Selesai mengubah pengaturan.";
+    return "👍 Selesai mengubah pengaturan.";
   }
 
   if (data.step === "value") {
@@ -102,7 +105,7 @@ export async function handlePengaturanInput(
   const choice = fieldByNumber[normalized];
 
   if (!choice) {
-    return "Balas nomor 1 sampai 4 untuk memilih yang mau diubah, atau SELESAI.";
+    return "⚠️ Balas nomor 1 sampai 4 untuk memilih yang mau diubah, atau SELESAI.";
   }
 
   await setPendingAction(userId, "manage_settings", {

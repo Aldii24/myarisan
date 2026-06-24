@@ -11,6 +11,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, field, footer, header } from "./format";
 
 const cancelKeywords = new Set(["batal", "cancel"]);
 const confirmKeywords = new Set(["ya", "iya", "ok", "oke", "lanjut"]);
@@ -46,22 +47,27 @@ function parsePeriodType(text: string): "weekly" | "monthly" | null {
 }
 
 function summary(data: CreateArisanData) {
-  return `Cek dulu ya:
-Nama: ${data.name}
-Setoran: ${formatRupiah(data.amount ?? 0)}
-Periode: ${data.periodType === "weekly" ? "Mingguan" : "Bulanan"}
-Batas setor: tanggal ${data.dueDay}
-Rekening admin: ${data.bankAccountText}
-
-Ketik YA untuk membuat arisan, atau BATAL untuk membatalkan.`;
+  return compose(
+    header("✨", "Cek Dulu Ya"),
+    [
+      field("📝", "Nama", data.name ?? "-"),
+      field("💰", "Setoran", formatRupiah(data.amount ?? 0)),
+      field("📅", "Periode", data.periodType === "weekly" ? "Mingguan" : "Bulanan"),
+      field("⏰", "Batas setor", `tanggal ${data.dueDay}`),
+      field("🏦", "Rekening admin", data.bankAccountText ?? "-"),
+    ].join("\n"),
+    footer("Ketik YA untuk membuat arisan, atau BATAL untuk membatalkan."),
+  );
 }
 
 export async function beginCreateArisan(userId: string) {
   await setPendingAction(userId, "create_arisan", { step: "name" });
 
-  return `Buat arisan baru.
-Siapa nama arisannya? (contoh: Arisan RT 05)
-Ketik BATAL kapan saja untuk membatalkan.`;
+  return compose(
+    header("✨", "Buat Arisan Baru"),
+    "Siapa nama arisannya? (contoh: Arisan RT 05)",
+    footer("Ketik BATAL kapan saja untuk membatalkan."),
+  );
 }
 
 export async function handleCreateArisanInput(
@@ -74,7 +80,7 @@ export async function handleCreateArisanInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Pembuatan arisan dibatalkan.";
+    return "👍 Pembuatan arisan dibatalkan.";
   }
 
   const data = state.data as CreateArisanData;
@@ -189,10 +195,14 @@ Contoh: BCA 1234567890 a.n. Budi`;
 
       await clearPendingAction(userId);
 
-      return `Arisan "${data.name}" berhasil dibuat ✅
-Kode join: ${group.joinCode}
-
-Bagikan kode ini ke anggota, atau ketik ANGGOTA untuk menambah anggota dari dashboard.`;
+      return compose(
+        header("🎉", "Arisan Dibuat"),
+        `Arisan ${bold(data.name)} berhasil dibuat!`,
+        field("🔑", "Kode join", group.joinCode),
+        footer(
+          "Bagikan kode ini ke anggota, atau ketik ANGGOTA untuk menambah anggota.",
+        ),
+      );
     }
     default: {
       await clearPendingAction(userId);

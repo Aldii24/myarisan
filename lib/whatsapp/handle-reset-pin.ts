@@ -10,6 +10,7 @@ import {
   clearPendingAction,
   setPendingAction,
 } from "./conversation-state";
+import { bold, compose, footer, header } from "./format";
 
 const cancelKeywords = new Set(["batal", "cancel"]);
 
@@ -17,9 +18,11 @@ const cancelKeywords = new Set(["batal", "cancel"]);
 export async function beginResetPin(userId: string) {
   await setPendingAction(userId, "reset_pin");
 
-  return `Reset PIN MyArisan.
-Kirim PIN baru kamu berupa 4 angka (contoh: 1234).
-Ketik BATAL untuk membatalkan.`;
+  return compose(
+    header("🔐", "Reset PIN"),
+    `Kirim PIN baru kamu berupa ${bold("4 angka")} (contoh: 1234).`,
+    footer("Ketik BATAL untuk membatalkan."),
+  );
 }
 
 // Step 2: user is mid-flow. Interpret the message as the new PIN.
@@ -30,11 +33,11 @@ export async function handleResetPinInput(userId: string, text: string) {
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
 
-    return "Reset PIN dibatalkan. PIN lama kamu masih berlaku.";
+    return "👍 Reset PIN dibatalkan. PIN lama kamu masih berlaku.";
   }
 
   if (!isValidPin(trimmed)) {
-    return `PIN harus berupa 4 angka, contoh: 1234.
+    return `⚠️ PIN harus berupa 4 angka, contoh: 1234.
 Kirim PIN baru atau ketik BATAL untuk membatalkan.`;
   }
 
@@ -49,6 +52,11 @@ Kirim PIN baru atau ketik BATAL untuk membatalkan.`;
     })
     .where(eq(users.id, userId));
 
-  return `PIN berhasil diperbarui ✅
-Sekarang kamu bisa masuk ke dashboard MyArisan pakai PIN baru ini. Jaga kerahasiaannya ya.`;
+  return compose(
+    header("🔐", "PIN Diperbarui"),
+    "✅ PIN kamu berhasil diganti.",
+    footer(
+      "Sekarang kamu bisa masuk ke dashboard pakai PIN baru ini. Jaga kerahasiaannya ya 🤫",
+    ),
+  );
 }

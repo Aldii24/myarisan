@@ -78,7 +78,7 @@ describe("handleSelectArisanInput", () => {
       command: { name: "status" },
       userId: "u1",
     });
-    assert.match(reply, /^Arisan aktif: RT2/);
+    assert.match(reply, /^✅ \*Arisan aktif: RT2\*/);
     assert.match(reply, /REPLY_FOR_COMMAND/);
   });
 

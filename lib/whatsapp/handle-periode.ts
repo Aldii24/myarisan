@@ -8,6 +8,7 @@ import {
   setPendingAction,
   type PendingActionState,
 } from "./conversation-state";
+import { bold, compose, field, header, italic } from "./format";
 
 type PeriodeData = {
   arisanId: string;
@@ -33,13 +34,15 @@ export async function beginPeriode(
     arisanName,
   } satisfies PeriodeData);
 
-  const lines = [`Kelola periode ${arisanName}`];
+  const lines = [header("🗓️", "Kelola Periode", arisanName), ""];
 
   if (overview.activePeriod) {
     lines.push(
-      `Periode aktif: ${overview.activePeriod.name}`,
-      `Batas setor: ${formatDateLabel(overview.activePeriod.dueDate)}`,
-      `Sudah bayar: ${overview.paidCount} · Belum bayar: ${overview.unpaidCount}`,
+      field("📅", "Periode aktif", overview.activePeriod.name),
+      field("⏰", "Batas setor", formatDateLabel(overview.activePeriod.dueDate)),
+      `✅ Sudah bayar: ${bold(overview.paidCount)} · ⏳ Belum: ${bold(
+        overview.unpaidCount,
+      )}`,
     );
   } else {
     lines.push("Belum ada periode aktif.");
@@ -47,14 +50,17 @@ export async function beginPeriode(
 
   if (overview.activePeriod && !overview.hasDrawWinner) {
     lines.push(
-      "Catatan: giliran bulan ini belum diatur, periode ini tidak akan punya catatan pemenang.",
+      "",
+      italic(
+        "⚠️ Giliran bulan ini belum diatur — periode ini tidak akan punya catatan pemenang.",
+      ),
     );
   }
 
   lines.push(
     "",
-    "Tutup periode ini dan mulai periode berikutnya?",
-    "Balas YA untuk lanjut, atau BATAL untuk membatalkan.",
+    bold("Tutup periode ini dan mulai periode berikutnya?"),
+    italic("Balas YA untuk lanjut, atau BATAL untuk membatalkan."),
   );
 
   return lines.join("\n");
@@ -70,11 +76,11 @@ export async function handlePeriodeInput(
 
   if (cancelKeywords.has(normalized)) {
     await clearPendingAction(userId);
-    return "Pengaturan periode dibatalkan.";
+    return "👍 Pengaturan periode dibatalkan.";
   }
 
   if (!confirmKeywords.has(normalized)) {
-    return "Balas YA untuk tutup & mulai periode baru, atau BATAL untuk membatalkan.";
+    return "Balas *YA* untuk tutup & mulai periode baru, atau *BATAL* untuk membatalkan.";
   }
 
   const result = await startNextPeriod({
@@ -86,17 +92,23 @@ export async function handlePeriodeInput(
 
   if (!result.ok) {
     if (result.reason === "expired") {
-      return "Paket arisan sudah berakhir. Perpanjang paket untuk membuka periode baru.";
+      return "⚠️ Paket arisan sudah berakhir. Perpanjang paket untuk membuka periode baru.";
     }
 
-    return "Arisan tidak ditemukan.";
+    return "⚠️ Arisan tidak ditemukan.";
   }
 
   if (result.closedPeriodName) {
-    return `Periode ${result.closedPeriodName} ditutup.
-Periode baru dimulai: ${result.newPeriodName}.
-Anggota mulai dari status belum bayar lagi.`;
+    return compose(
+      header("🗓️", "Periode Baru"),
+      `✅ Periode ${bold(result.closedPeriodName)} ditutup.`,
+      `🆕 Periode baru dimulai: ${bold(result.newPeriodName ?? "-")}.`,
+      italic("Semua anggota mulai dari status belum bayar lagi."),
+    );
   }
 
-  return `Periode baru dimulai: ${result.newPeriodName}.`;
+  return compose(
+    header("🗓️", "Periode Baru"),
+    `🆕 Periode baru dimulai: ${bold(result.newPeriodName ?? "-")}.`,
+  );
 }
